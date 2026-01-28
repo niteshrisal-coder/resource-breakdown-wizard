@@ -138,7 +138,7 @@ export function RateAnalysis() {
       name: "",
       category: "1",
       rateExclVat: "0",
-      vat: "13",
+      vat: "0",
       porterCost: "0",
       metalledCost: "0",
       graveledCost: "0",
@@ -171,8 +171,7 @@ export function RateAnalysis() {
     const graveled = (parseFloat(item.graveledCost) || 0) * (parseFloat(graveledCoeff) || 1) * categoryCoeff;
     const loadUnload = parseFloat(item.loadUnload) || 0;
     
-    const vatAmount = (rate * vat) / 100;
-    return (rate + vatAmount + porter + metalled + graveled + loadUnload).toFixed(2);
+    return (rate + vat + porter + metalled + graveled + loadUnload).toFixed(2);
   };
 
   return (
@@ -390,12 +389,26 @@ export function RateAnalysis() {
                         />
                       </TableCell>
                       <TableCell className="p-1">
-                        <Input
-                          type="number"
-                          value={item.vat}
-                          onChange={(e) => updateItem(item.id, "vat", e.target.value)}
-                          className="h-8 text-xs text-right"
-                        />
+                        <div className="flex gap-1">
+                          <Input
+                            type="number"
+                            value={item.vat}
+                            onChange={(e) => updateItem(item.id, "vat", e.target.value)}
+                            className="h-8 text-xs text-right"
+                          />
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            className="h-8 w-8 shrink-0"
+                            onClick={() => {
+                              const rate = parseFloat(item.rateExclVat) || 0;
+                              updateItem(item.id, "vat", (rate * 0.13).toFixed(2));
+                            }}
+                            title="Calculate 13% VAT"
+                          >
+                            %
+                          </Button>
+                        </div>
                       </TableCell>
                       <TableCell className="p-1">
                         <Input
