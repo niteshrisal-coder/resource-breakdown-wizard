@@ -38,6 +38,14 @@ export function RateAnalysis() {
   const [transportMode, setTransportMode] = useState<string>(() => {
     return localStorage.getItem("rate_transport_mode") || "Truck";
   });
+
+  const handleTransportModeChange = (mode: string) => {
+    setTransportMode(mode);
+    if (mode === "Tractor") {
+      setGraveledCoeff("0.074");
+      setMetalledCoeff("0.075");
+    }
+  };
   const [metalledDist, setMetalledDist] = useState<string>(() => {
     return localStorage.getItem("rate_metalled_dist") || "0";
   });
@@ -177,7 +185,7 @@ export function RateAnalysis() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="space-y-2">
               <Label htmlFor="transport-mode">Mode of Transport</Label>
-              <Select value={transportMode} onValueChange={setTransportMode}>
+              <Select value={transportMode} onValueChange={handleTransportModeChange}>
                 <SelectTrigger id="transport-mode">
                   <SelectValue placeholder="Select mode" />
                 </SelectTrigger>
