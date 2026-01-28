@@ -1,6 +1,12 @@
 import { ReactNode } from "react";
 import { Link, useLocation } from "wouter";
-import { LayoutDashboard, FileSpreadsheet, Menu, X } from "lucide-react";
+import {
+  LayoutDashboard,
+  FileSpreadsheet,
+  Menu,
+  X,
+  ShoppingCart,
+} from "lucide-react";
 import { useState } from "react";
 
 interface LayoutShellProps {
@@ -14,6 +20,7 @@ export function LayoutShell({ children }: LayoutShellProps) {
   const navItems = [
     { label: "Dashboard", href: "/", icon: LayoutDashboard },
     { label: "Reports", href: "/reports", icon: FileSpreadsheet },
+    { label: "Procurement", href: "/procurement", icon: ShoppingCart },
   ];
 
   return (
@@ -42,9 +49,11 @@ export function LayoutShell({ children }: LayoutShellProps) {
                       href={item.href}
                       className={`
                         flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200
-                        ${isActive 
-                          ? "bg-primary/10 text-primary shadow-sm ring-1 ring-primary/20" 
-                          : "text-muted-foreground hover:bg-muted hover:text-foreground"}
+                        ${
+                          isActive
+                            ? "bg-primary/10 text-primary shadow-sm ring-1 ring-primary/20"
+                            : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                        }
                       `}
                     >
                       <item.icon className="w-4 h-4" />
@@ -61,7 +70,11 @@ export function LayoutShell({ children }: LayoutShellProps) {
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                 className="p-2 rounded-lg text-muted-foreground hover:bg-muted"
               >
-                {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+                {isMobileMenuOpen ? (
+                  <X className="w-6 h-6" />
+                ) : (
+                  <Menu className="w-6 h-6" />
+                )}
               </button>
             </div>
           </div>
@@ -72,17 +85,19 @@ export function LayoutShell({ children }: LayoutShellProps) {
           <div className="md:hidden border-t border-border bg-white animate-in slide-in-from-top-2">
             <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
               {navItems.map((item) => {
-                 const isActive = location === item.href;
-                 return (
+                const isActive = location === item.href;
+                return (
                   <Link
                     key={item.href}
                     href={item.href}
                     onClick={() => setIsMobileMenuOpen(false)}
                     className={`
                       block px-3 py-2 rounded-md text-base font-medium
-                      ${isActive 
-                        ? "bg-primary/10 text-primary" 
-                        : "text-muted-foreground hover:bg-muted hover:text-foreground"}
+                      ${
+                        isActive
+                          ? "bg-primary/10 text-primary"
+                          : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                      }
                     `}
                   >
                     <div className="flex items-center gap-2">
