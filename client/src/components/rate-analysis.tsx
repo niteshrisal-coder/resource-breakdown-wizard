@@ -400,7 +400,8 @@ export function RateAnalysis() {
                             variant="outline"
                             size="icon"
                             className="h-8 w-8 shrink-0"
-                            onClick={() => {
+                            onClick={(e) => {
+                              e.preventDefault();
                               const rate = parseFloat(item.rateExclVat) || 0;
                               updateItem(item.id, "vat", (rate * 0.13).toFixed(2));
                             }}
