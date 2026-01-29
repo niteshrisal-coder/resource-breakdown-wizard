@@ -17,7 +17,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Plus, Trash2, Download, ChevronLeft } from "lucide-react";
+import { Plus, Trash2, Download, ChevronLeft, Upload } from "lucide-react";
+import { useUpload } from "@/hooks/use-upload";
 
 interface Project {
   id: string;
@@ -32,6 +33,7 @@ interface BidResponse {
   amount: string;
   uploadDate: string;
   status: "submitted" | "reviewed" | "rejected" | "approved";
+  documentUrl?: string;
 }
 
 interface BidResponseProps {
@@ -68,6 +70,13 @@ export const BidResponse: React.FC<BidResponseProps> = ({
     vendor: "",
     amount: "",
     status: "submitted" as const,
+    documentUrl: "",
+  });
+
+  const { uploadFile, isUploading } = useUpload({
+    onSuccess: (response) => {
+      setNewBidResponse(prev => ({ ...prev, documentUrl: response.objectPath }));
+    },
   });
 
   const handleAddBidResponse = () => {
@@ -83,6 +92,7 @@ export const BidResponse: React.FC<BidResponseProps> = ({
         amount: newBidResponse.amount,
         uploadDate: new Date().toISOString().split("T")[0],
         status: newBidResponse.status,
+        documentUrl: newBidResponse.documentUrl,
       };
       setBidResponses([...bidResponses, bidResponse]);
       setNewBidResponse({
@@ -90,6 +100,7 @@ export const BidResponse: React.FC<BidResponseProps> = ({
         vendor: "",
         amount: "",
         status: "submitted",
+        documentUrl: "",
       });
       setIsDialogOpen(false);
     }
@@ -206,7 +217,23 @@ export const BidResponse: React.FC<BidResponseProps> = ({
                     <option value="rejected">Rejected</option>
                   </select>
                 </div>
-                <Button onClick={handleAddBidResponse} className="w-full">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Upload PDF Document
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      type="file"
+                      accept=".pdf"
+                      onChange={(e) => e.target.files?.[0] && uploadFile(e.target.files[0])}
+                      disabled={isUploading}
+                      className="cursor-pointer"
+                    />
+                    {isUploading && <div className="text-xs text-blue-500 animate-pulse">Uploading...</div>}
+                    {newBidResponse.documentUrl && <div className="text-xs text-green-500">✓ Uploaded</div>}
+                  </div>
+                </div>
+                <Button onClick={handleAddBidResponse} className="w-full" disabled={isUploading}>
                   Add Bid Response
                 </Button>
               </div>
@@ -254,7 +281,13 @@ export const BidResponse: React.FC<BidResponseProps> = ({
                         </span>
                       </TableCell>
                       <TableCell className="text-center flex gap-2 justify-center">
-                        <Button variant="ghost" size="sm" title="Download">
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          title="Download"
+                          onClick={() => response.documentUrl && window.open(`/api/uploads/${response.documentUrl}`, '_blank')}
+                          disabled={!response.documentUrl}
+                        >
                           <Download size={16} />
                         </Button>
                         <Button
