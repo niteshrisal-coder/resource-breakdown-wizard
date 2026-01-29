@@ -1398,16 +1398,27 @@ function EstimateComponent({
                     )}
                   </td>
                   <td className="border border-gray-300 p-2">
-                    <DescriptionAutocomplete
-                      value={row.description as string}
-                      onChange={(value) =>
-                        handleCellChange(row.id, "description", value)
-                      }
-                      workItems={workItems || []}
-                      onSelect={(description) =>
-                        handleDescriptionSelect(row.id, description)
-                      }
-                    />
+                    {row.isMainItem ? (
+                      <DescriptionAutocomplete
+                        value={row.description as string}
+                        onChange={(value) =>
+                          handleCellChange(row.id, "description", value)
+                        }
+                        workItems={workItems || []}
+                        onSelect={(description) =>
+                          handleDescriptionSelect(row.id, description)
+                        }
+                      />
+                    ) : (
+                      <Input
+                        value={row.description as string}
+                        onChange={(e) =>
+                          handleCellChange(row.id, "description", e.target.value)
+                        }
+                        className="border-0 rounded-0 focus:bg-gray-50"
+                        placeholder="Enter description"
+                      />
+                    )}
                   </td>
                   <td className="border border-gray-300 p-2">
                     <Input
