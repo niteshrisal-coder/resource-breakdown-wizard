@@ -1137,26 +1137,14 @@ function DescriptionAutocomplete({
   );
 }
 
-function EstimateComponent() {
+function EstimateComponent({
+  estimateRows,
+  setEstimateRows,
+}: {
+  estimateRows: EstimateRow[];
+  setEstimateRows: React.Dispatch<React.SetStateAction<EstimateRow[]>>;
+}) {
   const { data: workItems } = useWorkItems();
-  const [estimateRows, setEstimateRows] = useState<EstimateRow[]>(() =>
-    getFromLocalStorage(STORAGE_KEYS.ESTIMATE_ROWS, [
-      {
-        id: "1",
-        serialNo: 1,
-        description: "",
-        unit: "",
-        length: "",
-        breadth: "",
-        height: "",
-        nos: "",
-        quantity: "",
-        remarks: "",
-        isMainItem: true,
-        isExpanded: true,
-      },
-    ]),
-  );
 
   const [saveStatus, setSaveStatus] = useState<string>("");
 
@@ -1635,7 +1623,7 @@ function BOQComponent({ estimateRows }: BOQComponentProps) {
       (r) => r.isMainItem && r.description.trim(),
     );
 
-    if (mainEstimateItems.length > 0 && boqRows.length === 0) {
+    setBoqRows((prevBoq) => {
       const newBoqRows: BOQRow[] = mainEstimateItems.map((mainItem, index) => {
         const mainItemTotal = estimateRows
           .filter((r) => r.parentId === mainItem.id)
@@ -1645,21 +1633,27 @@ function BOQComponent({ estimateRows }: BOQComponentProps) {
           )
           .toFixed(2);
 
+        const existingRow = prevBoq.find(
+          (r) => r.estimateMainItemId === mainItem.id,
+        );
+
         return {
-          id: mainItem.id,
+          id: existingRow?.id || mainItem.id,
           serialNo: index + 1,
           description: mainItem.description,
           unit: mainItem.unit,
           quantity: mainItemTotal,
-          rate: "",
-          amount: "",
-          refToSS: "",
+          rate: existingRow?.rate || "",
+          amount: existingRow?.amount || "",
+          refToSS: existingRow?.refToSS || "",
           estimateMainItemId: mainItem.id,
         };
       });
-
-      setBoqRows(newBoqRows);
-    }
+      
+      // Merge with manual rows (those without estimateMainItemId)
+      const manualRows = prevBoq.filter(r => !r.estimateMainItemId);
+      return [...newBoqRows, ...manualRows].map((r, i) => ({ ...r, serialNo: i + 1 }));
+    });
   }, [estimateRows]);
 
   const handleCellChange = (rowId: string, column: string, value: string) => {
@@ -2068,7 +2062,10 @@ export function QuantityBreakdownDashboard() {
                 <CardTitle>Project Estimate</CardTitle>
               </CardHeader>
               <CardContent>
-                <EstimateComponent />
+                <EstimateComponent
+                  estimateRows={estimateRows}
+                  setEstimateRows={setEstimateRows}
+                />
               </CardContent>
             </Card>
           </TabsContent>

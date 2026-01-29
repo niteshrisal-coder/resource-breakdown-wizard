@@ -12,7 +12,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Plus, Trash2 } from "lucide-react";
-// import { BidResponse } from "./bidresponse";
+import { BidResponse } from "../components/bidresponse";
 
 interface Project {
   id: string;
@@ -138,23 +138,10 @@ const Procurement = () => {
           </Card>
         ) : selectedAction === "bidresponse" && selectedProject ? (
           // BID RESPONSE VIEW
-          <div className="space-y-4">
-            <Button
-              variant="ghost"
-              onClick={() => setSelectedAction(null)}
-              className="gap-2"
-            >
-              ← Back to Actions
-            </Button>
-            <Card>
-              <CardHeader>
-                <CardTitle>Bid Response - {selectedProject.name}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">Bid Response functionality is coming soon.</p>
-              </CardContent>
-            </Card>
-          </div>
+          <BidResponse
+            project={selectedProject}
+            onBack={() => setSelectedAction(null)}
+          />
         ) : (
           // PROJECT ACTIONS VIEW
           <div className="space-y-4">
