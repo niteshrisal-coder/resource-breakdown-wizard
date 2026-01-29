@@ -1156,28 +1156,36 @@ function EstimateComponent({
   }, [estimateRows]);
 
   const calculateQuantity = (row: EstimateRow, allRows: EstimateRow[]): string => {
-    const parseValue = (val: any): number => {
-      if (typeof val !== "string") return parseFloat(val) || 0;
-      if (val.startsWith("=")) {
-        const formula = val.substring(1).trim().toUpperCase();
+    const parseValue = (val: any, visited = new Set<string>()): number => {
+      if (typeof val !== "string" || val === null || val === undefined) return parseFloat(val as any) || 0;
+      const strVal = val.trim();
+      if (strVal.startsWith("=")) {
+        const formula = strVal.substring(1).trim().toUpperCase();
         
-        // Support linking to other row's quantities via #ID or #SN (Serial Number)
+        // Circular dependency check using row ID
+        const cellRef = `${row.id}`;
+        if (visited.has(cellRef)) return 0;
+        const newVisited = new Set(visited);
+        newVisited.add(cellRef);
+
         const matchSn = formula.match(/^SN(\d+)$/);
         if (matchSn) {
           const targetSn = parseInt(matchSn[1]);
           const targetRow = allRows.find(r => r.isMainItem && r.serialNo === targetSn);
-          return parseFloat(targetRow?.quantity as string) || 0;
+          if (!targetRow) return 0;
+          return parseFloat(targetRow.quantity as string) || 0;
         }
 
         const matchId = formula.match(/^#(\d+)$/);
         if (matchId) {
           const targetId = matchId[1];
           const targetRow = allRows.find(r => r.id === targetId);
-          return parseFloat(targetRow?.quantity as string) || 0;
+          if (!targetRow) return 0;
+          return parseFloat(targetRow.quantity as string) || 0;
         }
         return 0;
       }
-      return parseFloat(val) || 0;
+      return parseFloat(strVal) || 0;
     };
 
     const length = parseValue(row.length);
@@ -1219,8 +1227,7 @@ function EstimateComponent({
   const handleCellChange = (rowId: string, column: string, value: string) => {
     if (value.startsWith("=") && value.length === 1) {
       setActiveLinkingCell({ rowId, column });
-    } else if (activeLinkingCell?.rowId === rowId && activeLinkingCell?.column === column) {
-      // If user typed something else after '=', exit linking mode
+    } else if (activeLinkingCell?.rowId === rowId && activeLinkingCell?.column === column && !value.startsWith("=")) {
       setActiveLinkingCell(null);
     }
 
@@ -1232,11 +1239,15 @@ function EstimateComponent({
         return row;
       });
 
-      // Recalculate all quantities because one change might affect others via formulas
-      return updatedRows.map((row) => ({
-        ...row,
-        quantity: calculateQuantity(row, updatedRows),
-      }));
+      // Recalculate all quantities multiple times to handle multi-step dependencies
+      let finalRows = [...updatedRows];
+      for (let i = 0; i < 5; i++) { // Max 5 levels of dependency
+        finalRows = finalRows.map((r) => ({
+          ...r,
+          quantity: calculateQuantity(r, finalRows),
+        }));
+      }
+      return finalRows;
     });
   };
 
