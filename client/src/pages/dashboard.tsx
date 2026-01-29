@@ -1199,7 +1199,31 @@ function EstimateComponent({
     return quantity.toFixed(2);
   };
 
+  const [activeLinkingCell, setActiveLinkingCell] = useState<{
+    rowId: string;
+    column: string;
+  } | null>(null);
+
+  const handleCellClick = (rowId: string, column: string) => {
+    if (activeLinkingCell) {
+      // If we are in "linking mode", click on another cell should create the reference
+      const targetRow = estimateRows.find((r) => r.id === rowId);
+      if (targetRow && (rowId !== activeLinkingCell.rowId || column !== activeLinkingCell.column)) {
+        const formula = `=#${rowId}`;
+        handleCellChange(activeLinkingCell.rowId, activeLinkingCell.column, formula);
+        setActiveLinkingCell(null);
+      }
+    }
+  };
+
   const handleCellChange = (rowId: string, column: string, value: string) => {
+    if (value.startsWith("=") && value.length === 1) {
+      setActiveLinkingCell({ rowId, column });
+    } else if (activeLinkingCell?.rowId === rowId && activeLinkingCell?.column === column) {
+      // If user typed something else after '=', exit linking mode
+      setActiveLinkingCell(null);
+    }
+
     setEstimateRows((rows) => {
       const updatedRows = rows.map((row) => {
         if (row.id === rowId) {
@@ -1436,10 +1460,13 @@ function EstimateComponent({
                     <div className="relative group">
                       <Input
                         value={row.length as string}
+                        onClick={() => handleCellClick(row.id, "length")}
                         onChange={(e) =>
                           handleCellChange(row.id, "length", e.target.value)
                         }
                         className={`border-0 rounded-0 text-center ${
+                          activeLinkingCell?.rowId === row.id && activeLinkingCell?.column === "length" ? "ring-2 ring-orange-500" : ""
+                        } ${
                           row.isMainItem ? "focus:bg-blue-50" : "focus:bg-gray-50"
                         }`}
                         placeholder="0.00"
@@ -1460,10 +1487,13 @@ function EstimateComponent({
                     <div className="relative group">
                       <Input
                         value={row.breadth as string}
+                        onClick={() => handleCellClick(row.id, "breadth")}
                         onChange={(e) =>
                           handleCellChange(row.id, "breadth", e.target.value)
                         }
                         className={`border-0 rounded-0 text-center ${
+                          activeLinkingCell?.rowId === row.id && activeLinkingCell?.column === "breadth" ? "ring-2 ring-orange-500" : ""
+                        } ${
                           row.isMainItem ? "focus:bg-blue-50" : "focus:bg-gray-50"
                         }`}
                         placeholder="0.00"
@@ -1484,10 +1514,13 @@ function EstimateComponent({
                     <div className="relative group">
                       <Input
                         value={row.height as string}
+                        onClick={() => handleCellClick(row.id, "height")}
                         onChange={(e) =>
                           handleCellChange(row.id, "height", e.target.value)
                         }
                         className={`border-0 rounded-0 text-center ${
+                          activeLinkingCell?.rowId === row.id && activeLinkingCell?.column === "height" ? "ring-2 ring-orange-500" : ""
+                        } ${
                           row.isMainItem ? "focus:bg-blue-50" : "focus:bg-gray-50"
                         }`}
                         placeholder="0.00"
@@ -1508,10 +1541,13 @@ function EstimateComponent({
                     <div className="relative group">
                       <Input
                         value={row.nos as string}
+                        onClick={() => handleCellClick(row.id, "nos")}
                         onChange={(e) =>
                           handleCellChange(row.id, "nos", e.target.value)
                         }
                         className={`border-0 rounded-0 text-center ${
+                          activeLinkingCell?.rowId === row.id && activeLinkingCell?.column === "nos" ? "ring-2 ring-orange-500" : ""
+                        } ${
                           row.isMainItem ? "focus:bg-blue-50" : "focus:bg-gray-50"
                         }`}
                         placeholder="0"
