@@ -1155,26 +1155,35 @@ function EstimateComponent({
     setTimeout(() => setSaveStatus(""), 2000);
   }, [estimateRows]);
 
-  const handleCellChange = (rowId: string, column: string, value: string) => {
-    setEstimateRows((rows) =>
-      rows.map((row) => {
-        if (row.id === rowId) {
-          const updatedRow = { ...row, [column]: value };
-          if (["length", "breadth", "height", "nos"].includes(column)) {
-            updatedRow.quantity = calculateQuantity(updatedRow);
-          }
-          return updatedRow;
+  const calculateQuantity = (row: EstimateRow, allRows: EstimateRow[]): string => {
+    const parseValue = (val: any): number => {
+      if (typeof val !== "string") return parseFloat(val) || 0;
+      if (val.startsWith("=")) {
+        const formula = val.substring(1).trim().toUpperCase();
+        
+        // Support linking to other row's quantities via #ID or #SN (Serial Number)
+        const matchSn = formula.match(/^SN(\d+)$/);
+        if (matchSn) {
+          const targetSn = parseInt(matchSn[1]);
+          const targetRow = allRows.find(r => r.isMainItem && r.serialNo === targetSn);
+          return parseFloat(targetRow?.quantity as string) || 0;
         }
-        return row;
-      }),
-    );
-  };
 
-  const calculateQuantity = (row: EstimateRow): string => {
-    const length = parseFloat(row.length as string) || 0;
-    const breadth = parseFloat(row.breadth as string) || 0;
-    const height = parseFloat(row.height as string) || 0;
-    const nos = parseFloat(row.nos as string) || 0;
+        const matchId = formula.match(/^#(\d+)$/);
+        if (matchId) {
+          const targetId = matchId[1];
+          const targetRow = allRows.find(r => r.id === targetId);
+          return parseFloat(targetRow?.quantity as string) || 0;
+        }
+        return 0;
+      }
+      return parseFloat(val) || 0;
+    };
+
+    const length = parseValue(row.length);
+    const breadth = parseValue(row.breadth);
+    const height = parseValue(row.height);
+    const nos = parseValue(row.nos);
 
     let quantity = 0;
     if (length && breadth && height) {
@@ -1188,6 +1197,23 @@ function EstimateComponent({
     }
 
     return quantity.toFixed(2);
+  };
+
+  const handleCellChange = (rowId: string, column: string, value: string) => {
+    setEstimateRows((rows) => {
+      const updatedRows = rows.map((row) => {
+        if (row.id === rowId) {
+          return { ...row, [column]: value };
+        }
+        return row;
+      });
+
+      // Recalculate all quantities because one change might affect others via formulas
+      return updatedRows.map((row) => ({
+        ...row,
+        quantity: calculateQuantity(row, updatedRows),
+      }));
+    });
   };
 
   const handleDescriptionSelect = (rowId: string, description: string) => {
@@ -1365,10 +1391,10 @@ function EstimateComponent({
                             <ChevronDown size={18} />
                           )}
                         </button>
-                        <span>{row.serialNo}</span>
+                        <span title={`ID: ${row.id}`}>{row.serialNo}</span>
                       </div>
                     ) : (
-                      <span className="ml-6 text-gray-500">-</span>
+                      <span className="ml-6 text-gray-500" title={`ID: ${row.id}`}>-</span>
                     )}
                   </td>
                   <td className="border border-gray-300 p-2">
@@ -1396,60 +1422,95 @@ function EstimateComponent({
                     />
                   </td>
                   <td className="border border-gray-300 p-2">
-                    <Input
-                      type="number"
-                      value={row.length as string}
-                      onChange={(e) =>
-                        handleCellChange(row.id, "length", e.target.value)
-                      }
-                      className={`border-0 rounded-0 text-center ${
-                        row.isMainItem ? "focus:bg-blue-50" : "focus:bg-gray-50"
-                      }`}
-                      placeholder="0.00"
-                      step="0.01"
-                    />
+                    <div className="relative group">
+                      <Input
+                        value={row.length as string}
+                        onChange={(e) =>
+                          handleCellChange(row.id, "length", e.target.value)
+                        }
+                        className={`border-0 rounded-0 text-center ${
+                          row.isMainItem ? "focus:bg-blue-50" : "focus:bg-gray-50"
+                        }`}
+                        placeholder="0.00"
+                        onFocus={(e) => {
+                          if (e.target.value.startsWith("=")) {
+                            // Keep formula visible during editing
+                          }
+                        }}
+                      />
+                      {row.length?.toString().startsWith("=") && (
+                        <div className="absolute right-1 top-1 text-[10px] text-blue-500 font-bold opacity-0 group-hover:opacity-100 bg-white/80 px-1 rounded">
+                          Link
+                        </div>
+                      )}
+                    </div>
                   </td>
                   <td className="border border-gray-300 p-2">
-                    <Input
-                      type="number"
-                      value={row.breadth as string}
-                      onChange={(e) =>
-                        handleCellChange(row.id, "breadth", e.target.value)
-                      }
-                      className={`border-0 rounded-0 text-center ${
-                        row.isMainItem ? "focus:bg-blue-50" : "focus:bg-gray-50"
-                      }`}
-                      placeholder="0.00"
-                      step="0.01"
-                    />
+                    <div className="relative group">
+                      <Input
+                        value={row.breadth as string}
+                        onChange={(e) =>
+                          handleCellChange(row.id, "breadth", e.target.value)
+                        }
+                        className={`border-0 rounded-0 text-center ${
+                          row.isMainItem ? "focus:bg-blue-50" : "focus:bg-gray-50"
+                        }`}
+                        placeholder="0.00"
+                        onFocus={(e) => {
+                          if (e.target.value.startsWith("=")) {
+                            // Keep formula visible during editing
+                          }
+                        }}
+                      />
+                      {row.breadth?.toString().startsWith("=") && (
+                        <div className="absolute right-1 top-1 text-[10px] text-blue-500 font-bold opacity-0 group-hover:opacity-100 bg-white/80 px-1 rounded">
+                          Link
+                        </div>
+                      )}
+                    </div>
                   </td>
                   <td className="border border-gray-300 p-2">
-                    <Input
-                      type="number"
-                      value={row.height as string}
-                      onChange={(e) =>
-                        handleCellChange(row.id, "height", e.target.value)
-                      }
-                      className={`border-0 rounded-0 text-center ${
-                        row.isMainItem ? "focus:bg-blue-50" : "focus:bg-gray-50"
-                      }`}
-                      placeholder="0.00"
-                      step="0.01"
-                    />
+                    <div className="relative group">
+                      <Input
+                        value={row.height as string}
+                        onChange={(e) =>
+                          handleCellChange(row.id, "height", e.target.value)
+                        }
+                        className={`border-0 rounded-0 text-center ${
+                          row.isMainItem ? "focus:bg-blue-50" : "focus:bg-gray-50"
+                        }`}
+                        placeholder="0.00"
+                        onFocus={(e) => {
+                          if (e.target.value.startsWith("=")) {
+                            // Keep formula visible during editing
+                          }
+                        }}
+                      />
+                      {row.height?.toString().startsWith("=") && (
+                        <div className="absolute right-1 top-1 text-[10px] text-blue-500 font-bold opacity-0 group-hover:opacity-100 bg-white/80 px-1 rounded">
+                          Link
+                        </div>
+                      )}
+                    </div>
                   </td>
                   <td className="border border-gray-300 p-2">
-                    <Input
-                      type="number"
-                      value={row.nos as string}
-                      onChange={(e) =>
-                        handleCellChange(row.id, "nos", e.target.value)
-                      }
-                      className={`border-0 rounded-0 text-center ${
-                        row.isMainItem ? "focus:bg-blue-50" : "focus:bg-gray-50"
-                      }`}
-                      placeholder="0"
-                      step="0.01"
-                    />
+                    <div className="relative group">
+                      <Input
+                        value={row.nos as string}
+                        onChange={(e) =>
+                          handleCellChange(row.id, "nos", e.target.value)
+                        }
+                        className={`border-0 rounded-0 text-center ${
+                          row.isMainItem ? "focus:bg-blue-50" : "focus:bg-gray-50"
+                        }`}
+                        placeholder="0"
+                      />
+                      {row.nos?.toString().startsWith("=") && (
+                        <div className="absolute right-1 top-1 text-[10px] text-blue-500 font-bold opacity-0 group-hover:opacity-100 bg-white/80 px-1 rounded">
+                          Link
+                        </div>
+                      )}
+                    </div>
                   </td>
                   <td
                     className={`border border-gray-300 p-4 font-bold text-center ${
