@@ -1,5 +1,3 @@
-[file name]: bidresponse.tsx
-[file content begin]
 import React, { useState, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -430,4 +428,3 @@ export const BidResponse: React.FC<BidResponseProps> = ({
     </div>
   );
 };
-[file content end]
