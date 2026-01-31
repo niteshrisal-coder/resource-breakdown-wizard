@@ -14,8 +14,9 @@ interface UploadResponse {
 }
 
 interface UseUploadOptions {
-  onSuccess?: (response: UploadResponse) => void;
-  onError?: (error: Error) => void;
+  onSuccess?: (response: UploadResponse, file: File) => void;
+  onError?: (error: Error, file: File) => void;
+  onProgress?: (progress: number, file: File) => void;
 }
 
 /**
@@ -125,13 +126,16 @@ export function useUpload(options: UseUploadOptions = {}) {
         setProgress(30);
         await uploadToPresignedUrl(file, uploadResponse.uploadURL);
 
+        // Add progress reporting if needed, but for now just call onProgress
+        options.onProgress?.(100, file);
+
         setProgress(100);
-        options.onSuccess?.(uploadResponse);
+        options.onSuccess?.(uploadResponse, file);
         return uploadResponse;
       } catch (err) {
         const error = err instanceof Error ? err : new Error("Upload failed");
         setError(error);
-        options.onError?.(error);
+        options.onError?.(error, file);
         return null;
       } finally {
         setIsUploading(false);
