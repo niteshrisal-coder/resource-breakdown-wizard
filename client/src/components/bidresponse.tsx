@@ -49,7 +49,10 @@ export const BidResponse: React.FC<BidResponseProps> = ({
   project,
   onBack,
 }) => {
-  const [bidResponses, setBidResponses] = useState<BidResponse[]>([]);
+  const [bidResponses, setBidResponses] = useState<BidResponse[]>(() => {
+    const saved = localStorage.getItem(`bid_responses_${project.id}`);
+    return saved ? JSON.parse(saved) : [];
+  });
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [uploadingFiles, setUploadingFiles] = useState<UploadingFile[]>([]);
@@ -68,7 +71,9 @@ export const BidResponse: React.FC<BidResponseProps> = ({
         documentUrl: response.objectPath,
       };
 
-      setBidResponses(prev => [...prev, newBidResponse]);
+      const updatedResponses = [...bidResponses, newBidResponse];
+      setBidResponses(updatedResponses);
+      localStorage.setItem(`bid_responses_${project.id}`, JSON.stringify(updatedResponses));
 
       // Remove file from uploading list
       setUploadingFiles(prev => prev.filter(f => f.file !== file));
@@ -144,7 +149,9 @@ export const BidResponse: React.FC<BidResponseProps> = ({
 
   const handleDeleteBidResponse = (id: string) => {
     if (confirm("Are you sure you want to delete this PDF?")) {
-      setBidResponses(bidResponses.filter((response) => response.id !== id));
+      const updatedResponses = bidResponses.filter((response) => response.id !== id);
+      setBidResponses(updatedResponses);
+      localStorage.setItem(`bid_responses_${project.id}`, JSON.stringify(updatedResponses));
     }
   };
 
