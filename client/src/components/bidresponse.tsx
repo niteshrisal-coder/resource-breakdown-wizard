@@ -49,22 +49,7 @@ export const BidResponse: React.FC<BidResponseProps> = ({
   project,
   onBack,
 }) => {
-  const [bidResponses, setBidResponses] = useState<BidResponse[]>([
-    {
-      id: "1",
-      fileName: "bid-proposal-001.pdf",
-      fileSize: "2.4 MB",
-      uploadDate: "2026-01-20",
-      documentUrl: "/uploads/bid1.pdf",
-    },
-    {
-      id: "2",
-      fileName: "technical-specs.pdf",
-      fileSize: "1.8 MB",
-      uploadDate: "2026-01-21",
-      documentUrl: "/uploads/bid2.pdf",
-    },
-  ]);
+  const [bidResponses, setBidResponses] = useState<BidResponse[]>([]);
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [uploadingFiles, setUploadingFiles] = useState<UploadingFile[]>([]);
