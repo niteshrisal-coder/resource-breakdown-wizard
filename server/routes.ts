@@ -4,13 +4,74 @@ import { storage } from "./storage";
 import { api } from "@shared/routes";
 import { z } from "zod";
 import { registerObjectStorageRoutes } from "./replit_integrations/object_storage/index";
+import { ObjectStorageService } from "./replit_integrations/object_storage/objectStorage";
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+const PDFParser = require("pdf-parse");
+import { PDFDocument } from "pdf-lib";
+import axios from "axios";
 
 export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
+  const objectStorage = new ObjectStorageService();
+
   // Register Object Storage routes
   registerObjectStorageRoutes(app);
+
+  app.post("/api/procurement/process-all", async (req, res) => {
+    try {
+      const { files } = req.body;
+      if (!files || !Array.isArray(files)) {
+        return res.status(400).json({ error: "Missing files" });
+      }
+
+      const mergedPdf = await PDFDocument.create();
+      
+      for (const fileInfo of files) {
+        try {
+          // 1. Get file from storage
+          const file = await objectStorage.getObjectEntityFile(fileInfo.documentUrl);
+          const [buffer] = await file.download();
+          
+          // 2. Extract text and find links (Simulating extract_download_info logic)
+          const data = await PDFParser(buffer);
+          const text = data.text;
+          const urls = text.match(/https?:\/\/[^\s]+/g) || [];
+          
+          // 3. Download PDFs from found links and merge
+          for (const url of urls) {
+            if (url.toLowerCase().endsWith(".pdf")) {
+              try {
+                const response = await axios.get(url, { responseType: 'arraybuffer' });
+                const pdfToMerge = await PDFDocument.load(response.data);
+                const copiedPages = await mergedPdf.copyPages(pdfToMerge, pdfToMerge.getPageIndices());
+                copiedPages.forEach((page) => mergedPdf.addPage(page));
+              } catch (e) {
+                console.error(`Failed to download/merge ${url}:`, e);
+              }
+            }
+          }
+          
+          // Also merge the original PDF
+          const originalPdf = await PDFDocument.load(buffer);
+          const originalPages = await mergedPdf.copyPages(originalPdf, originalPdf.getPageIndices());
+          originalPages.forEach((page) => mergedPdf.addPage(page));
+          
+        } catch (e) {
+          console.error(`Error processing ${fileInfo.fileName}:`, e);
+        }
+      }
+
+      const pdfBytes = await mergedPdf.save();
+      res.setHeader('Content-Type', 'application/pdf');
+      res.send(Buffer.from(pdfBytes));
+    } catch (error) {
+      console.error("Process all error:", error);
+      res.status(500).json({ error: "Failed to process PDFs" });
+    }
+  });
 
   // Work Items
   app.get(api.workItems.list.path, async (req, res) => {

@@ -138,6 +138,69 @@ const Procurement = () => {
             project={selectedProject}
             onBack={() => setSelectedAction(null)}
           />
+        ) : selectedAction === "download_all" && selectedProject ? (
+          // DOWNLOAD ALL VIEW
+          <div className="space-y-4">
+            <Button
+              variant="ghost"
+              onClick={() => setSelectedAction(null)}
+              className="gap-2"
+            >
+              ← Back to Project Actions
+            </Button>
+            <h2 className="text-2xl font-bold">Download All PDFs - {selectedProject.name}</h2>
+            <Card>
+              <CardContent className="pt-6">
+                <div className="space-y-4">
+                  <p className="text-sm text-muted-foreground">
+                    This will process all PDFs uploaded in the Bid Response tab, extract links from them, and merge the results.
+                  </p>
+                  <Button 
+                    className="w-full" 
+                    onClick={async () => {
+                      const saved = localStorage.getItem(`bid_responses_${selectedProject.id}`);
+                      const responses = saved ? JSON.parse(saved) : [];
+                      
+                      if (responses.length === 0) {
+                        alert("No PDFs found in Bid Response tab.");
+                        return;
+                      }
+
+                      // Logic to trigger backend processing
+                      try {
+                        const res = await fetch("/api/procurement/process-all", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ 
+                            projectId: selectedProject.id,
+                            files: responses 
+                          })
+                        });
+                        
+                        if (res.ok) {
+                          const blob = await res.blob();
+                          const url = window.URL.createObjectURL(blob);
+                          const a = document.createElement('a');
+                          a.href = url;
+                          a.download = `merged_${selectedProject.name}.pdf`;
+                          document.body.appendChild(a);
+                          a.click();
+                          a.remove();
+                        } else {
+                          alert("Processing failed.");
+                        }
+                      } catch (err) {
+                        console.error(err);
+                        alert("An error occurred during processing.");
+                      }
+                    }}
+                  >
+                    Execute Download and Merge
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         ) : (
           // PROJECT ACTIONS VIEW
           <div className="space-y-4">
@@ -159,7 +222,11 @@ const Procurement = () => {
               >
                 Add Bid Response Document
               </Button>
-              <Button className="w-full h-16 text-base" variant="outline">
+              <Button
+                className="w-full h-16 text-base"
+                variant="outline"
+                onClick={() => setSelectedAction("download_all")}
+              >
                 Download All
               </Button>
               <Button className="w-full h-16 text-base">Evaluation</Button>
