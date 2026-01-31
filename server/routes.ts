@@ -3,11 +3,14 @@ import type { Server } from "http";
 import { storage } from "./storage";
 import { api } from "@shared/routes";
 import { z } from "zod";
+import { registerObjectStorageRoutes } from "./replit_integrations/object_storage/index";
 
 export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
+  // Register Object Storage routes
+  registerObjectStorageRoutes(app);
 
   // Work Items
   app.get(api.workItems.list.path, async (req, res) => {

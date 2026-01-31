@@ -58,6 +58,7 @@ export const BidResponse: React.FC<BidResponseProps> = ({
 
   const { uploadFile, isUploading } = useUpload({
     onSuccess: (response: any, file: File) => {
+      console.log("Upload success response:", response);
       // Create a new bid response from uploaded file
       const newBidResponse: BidResponse = {
         id: Date.now().toString(),
@@ -73,6 +74,7 @@ export const BidResponse: React.FC<BidResponseProps> = ({
       setUploadingFiles(prev => prev.filter(f => f.file !== file));
     },
     onError: (error: Error, file: File) => {
+      console.error("Upload error:", error);
       // Update the file with error
       setUploadingFiles(prev => 
         prev.map(f => 

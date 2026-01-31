@@ -70,17 +70,17 @@ export function registerObjectStorageRoutes(app: Express): void {
    * This serves files from object storage. For public files, no auth needed.
    * For protected files, add authentication middleware and ACL checks.
    */
-  app.get("/objects/:objectPath(*)", async (req, res) => {
-    try {
-      const objectFile = await objectStorageService.getObjectEntityFile(req.path);
-      await objectStorageService.downloadObject(objectFile, res);
-    } catch (error) {
-      console.error("Error serving object:", error);
-      if (error instanceof ObjectNotFoundError) {
-        return res.status(404).json({ error: "Object not found" });
-      }
-      return res.status(500).json({ error: "Failed to serve object" });
-    }
+  app.get("/objects/:path", (req, res) => {
+    const objectPath = req.params.path;
+    objectStorageService.getObjectEntityFile(`/objects/${objectPath}`)
+      .then(objectFile => objectStorageService.downloadObject(objectFile, res))
+      .catch(error => {
+        console.error("Error serving object:", error);
+        if (error instanceof ObjectNotFoundError) {
+          return res.status(404).json({ error: "Object not found" });
+        }
+        return res.status(500).json({ error: "Failed to serve object" });
+      });
   });
 }
 
