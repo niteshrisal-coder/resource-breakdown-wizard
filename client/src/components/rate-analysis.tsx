@@ -166,7 +166,7 @@ export function RateAnalysis() {
     else if (item.category === "3") categoryCoeff = parseFloat(veryDifficultCoeff) || 1.0;
     else if (item.category === "4") categoryCoeff = parseFloat(highVolumeCoeff) || 1.0;
 
-    const porter = (parseFloat(item.porterCost) || 0) * (parseFloat(porterCoeff) || 1) * categoryCoeff;
+    const porter = (parseFloat(porterLead) / 3.22) * (parseFloat(porterCoeff) || 1) * (parseFloat(item.unitWeight) || 0) * categoryCoeff;
     const metalled = (parseFloat(item.metalledCost) || 0) * (parseFloat(metalledCoeff) || 1) * categoryCoeff;
     const graveled = (parseFloat(item.graveledCost) || 0) * (parseFloat(graveledCoeff) || 1) * categoryCoeff;
     const loadUnload = parseFloat(item.loadUnload) || 0;

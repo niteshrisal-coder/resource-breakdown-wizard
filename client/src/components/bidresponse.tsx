@@ -72,7 +72,7 @@ export const BidResponse: React.FC<BidResponseProps> = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { uploadFile, isUploading } = useUpload({
-    onSuccess: (response, file) => {
+    onSuccess: (response: any, file: File) => {
       // Create a new bid response from uploaded file
       const newBidResponse: BidResponse = {
         id: Date.now().toString(),
@@ -87,7 +87,7 @@ export const BidResponse: React.FC<BidResponseProps> = ({
       // Remove file from uploading list
       setUploadingFiles(prev => prev.filter(f => f.file !== file));
     },
-    onError: (error, file) => {
+    onError: (error: Error, file: File) => {
       // Update the file with error
       setUploadingFiles(prev => 
         prev.map(f => 
@@ -97,7 +97,7 @@ export const BidResponse: React.FC<BidResponseProps> = ({
         )
       );
     },
-    onProgress: (progress, file) => {
+    onProgress: (progress: number, file: File) => {
       // Update progress for the file
       setUploadingFiles(prev => 
         prev.map(f => 
