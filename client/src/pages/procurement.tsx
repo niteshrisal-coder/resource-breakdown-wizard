@@ -21,18 +21,10 @@ interface Project {
 }
 
 const Procurement = () => {
-  const [projects, setProjects] = useState<Project[]>([
-    {
-      id: "1",
-      name: "Construction Project A",
-      createdDate: "2026-01-10",
-    },
-    {
-      id: "2",
-      name: "Building Project B",
-      createdDate: "2026-01-15",
-    },
-  ]);
+  const [projects, setProjects] = useState<Project[]>(() => {
+    const saved = localStorage.getItem("procurement_projects");
+    return saved ? JSON.parse(saved) : [];
+  });
 
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [selectedAction, setSelectedAction] = useState<string | null>(null);
@@ -45,13 +37,17 @@ const Procurement = () => {
         name: projectName,
         createdDate: new Date().toISOString().split("T")[0],
       };
-      setProjects([...projects, newProject]);
+      const updatedProjects = [...projects, newProject];
+      setProjects(updatedProjects);
+      localStorage.setItem("procurement_projects", JSON.stringify(updatedProjects));
       setProjectName("");
     }
   };
 
   const handleDeleteProject = (id: string) => {
-    setProjects(projects.filter((project) => project.id !== id));
+    const updatedProjects = projects.filter((project) => project.id !== id);
+    setProjects(updatedProjects);
+    localStorage.setItem("procurement_projects", JSON.stringify(updatedProjects));
   };
 
   const handleDoubleClick = (project: Project) => {
