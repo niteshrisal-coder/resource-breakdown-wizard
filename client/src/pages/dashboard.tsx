@@ -976,7 +976,7 @@ function RateAnalysisComponent() {
             <br />•{" "}
             <span className="text-green-700 font-semibold">
               Porter Cost = Porter Coefficient × Porter Distance (
-              {distances.porter || "0"} km) × Unit Weight
+              {kmToKosh(distances.porter || 0).toFixed(2)} kosh) × Unit Weight
             </span>
             <br />•{" "}
             <span className="text-cyan-700 font-semibold">
@@ -1021,7 +1021,7 @@ function RateAnalysisComponent() {
                   const metalledCoeff = getMetalledCoefficient(category);
                   const gravelledCoeff = getGravelledCoefficient(category);
                   const unitWeight = ratesData[resource.id]?.unitWeight || 0;
-                  const porterDistance = distances.porter || 0;
+                  const porterDistanceKosh = kmToKosh(distances.porter || 0);
                   const metalledDistanceKosh = kmToKosh(
                     distances.metalled || 0,
                   );
@@ -1030,7 +1030,7 @@ function RateAnalysisComponent() {
                   );
 
                   const calculatedPorterCost =
-                    porterCoeff * porterDistance * unitWeight;
+                    porterCoeff * porterDistanceKosh * unitWeight;
                   const calculatedMetalledCost =
                     metalledCoeff * metalledDistanceKosh * unitWeight;
                   const calculatedGravelledCost =
