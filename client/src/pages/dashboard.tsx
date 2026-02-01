@@ -455,7 +455,7 @@ function RateAnalysisComponent() {
     return (
       <div className="p-8 text-center border-2 border-dashed rounded-lg">
         <p className="text-muted-foreground">
-          No resources found. Please add resources in the Quantity Breakdown tab
+          No resources found. Please add resources in the Norms tab
           first.
         </p>
       </div>
@@ -2223,7 +2223,7 @@ export function QuantityBreakdownDashboard() {
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.setAttribute("download", "Quantity_Breakdown.csv");
+    link.setAttribute("download", "Norms_Analysis.csv");
     document.body.appendChild(link);
     link.click();
 
@@ -2239,7 +2239,7 @@ export function QuantityBreakdownDashboard() {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <h1 className="text-3xl font-display font-bold text-foreground">
-              Quantity Breakdown
+              Norms Analysis
             </h1>
             <p className="text-muted-foreground mt-1">
               Manage work items, resources, estimates, BOQ, and logistics rates.
@@ -2261,11 +2261,11 @@ export function QuantityBreakdownDashboard() {
           </div>
         </div>
 
-        <Tabs defaultValue="quantity" className="w-full">
+        <Tabs defaultValue="norms" className="w-full">
           <TabsList className="grid w-full grid-cols-4 max-w-full">
-            <TabsTrigger value="quantity" className="gap-2">
+            <TabsTrigger value="norms" className="gap-2">
               <BarChart3 className="w-4 h-4" />
-              Quantity
+              Norms
             </TabsTrigger>
             <TabsTrigger value="estimate" className="gap-2">
               📊 Estimate
@@ -2279,7 +2279,7 @@ export function QuantityBreakdownDashboard() {
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="quantity" className="mt-6">
+          <TabsContent value="norms" className="mt-6">
             <QuantityTable />
           </TabsContent>
 
@@ -2437,8 +2437,8 @@ export function ProcurementManagementDashboard() {
                     <TableRow>
                       <TableCell colSpan={8} className="text-center py-8">
                         <p className="text-muted-foreground">
-                          No materials found. Add materials from Quantity
-                          Breakdown first.
+                          No materials found. Add materials from Norms
+                          first.
                         </p>
                       </TableCell>
                     </TableRow>
