@@ -234,6 +234,8 @@ function RateAnalysisComponent() {
     value: string,
   ) => {
     const num = parseFloat(value);
+    // Porter: convert km to kosh (1 kosh = 3.22 km)
+    const porterDistanceKosh = kmToKosh(distances.porter || 0);
     setRatesData((prev) => {
       const updated = {
         ...prev,
@@ -340,7 +342,7 @@ function RateAnalysisComponent() {
       const gravelledCoeff = getGravelledCoefficient(value);
       const unitWeight = updated[resourceId].unitWeight || 0;
 
-      // Porter: convert km to kosh
+      // Porter: convert km to kosh (1 kosh = 3.22 km)
       const porterDistanceKosh = kmToKosh(distances.porter || 0);
       updated[resourceId].porterCost =
         porterCoeff * porterDistanceKosh * unitWeight;
@@ -422,7 +424,7 @@ function RateAnalysisComponent() {
         const gravelledCoeff = getGravelledCoefficient(category);
         const unitWeight = next[id].unitWeight || 0;
 
-        // Porter: convert km to kosh
+        // Porter: convert km to kosh (1 kosh = 3.22 km)
         const porterDistanceKosh = kmToKosh(distances.porter || 0);
         next[id].porterCost = porterCoeff * porterDistanceKosh * unitWeight;
 
