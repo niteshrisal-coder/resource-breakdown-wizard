@@ -251,9 +251,10 @@ function RateAnalysisComponent() {
         const gravelledCoeff = getGravelledCoefficient(category);
         const unitWeight = Number.isNaN(num) ? 0 : num;
 
-        // Porter: uses km directly
+        // Porter: convert km to kosh (1 kosh = 3.22 km)
+        const porterDistanceKosh = kmToKosh(distances.porter || 0);
         updated[resourceId].porterCost =
-          porterCoeff * (distances.porter || 0) * unitWeight;
+          porterCoeff * porterDistanceKosh * unitWeight;
 
         // Metalled & Gravelled: convert km to kosh first
         const metalledDistanceKosh = kmToKosh(distances.metalled || 0);
@@ -339,9 +340,10 @@ function RateAnalysisComponent() {
       const gravelledCoeff = getGravelledCoefficient(value);
       const unitWeight = updated[resourceId].unitWeight || 0;
 
-      // Porter: uses km directly
+      // Porter: convert km to kosh
+      const porterDistanceKosh = kmToKosh(distances.porter || 0);
       updated[resourceId].porterCost =
-        porterCoeff * (distances.porter || 0) * unitWeight;
+        porterCoeff * porterDistanceKosh * unitWeight;
 
       // Metalled & Gravelled: convert km to kosh first
       const metalledDistanceKosh = kmToKosh(distances.metalled || 0);
@@ -420,9 +422,9 @@ function RateAnalysisComponent() {
         const gravelledCoeff = getGravelledCoefficient(category);
         const unitWeight = next[id].unitWeight || 0;
 
-        // Porter: uses km directly
-        const porterDistance = distances.porter || 0;
-        next[id].porterCost = porterCoeff * porterDistance * unitWeight;
+        // Porter: convert km to kosh
+        const porterDistanceKosh = kmToKosh(distances.porter || 0);
+        next[id].porterCost = porterCoeff * porterDistanceKosh * unitWeight;
 
         // Metalled & Gravelled: convert km to kosh first
         const metalledDistanceKosh = kmToKosh(distances.metalled || 0);
@@ -580,11 +582,11 @@ function RateAnalysisComponent() {
                       />
                     </TableCell>
                     <TableCell className="font-semibold text-green-700">
-                      {distances.porter || 0} km (direct)
+                      {kmToKosh(distances.porter).toFixed(2)} kosh
                     </TableCell>
                     <TableCell className="text-xs bg-green-50 p-2 rounded">
                       <strong>Porter Cost</strong> = Coeff ×{" "}
-                      {distances.porter || 0} km × Unit Weight
+                      {kmToKosh(distances.porter).toFixed(2)} kosh × Unit Weight
                     </TableCell>
                   </TableRow>
                 </TableBody>
