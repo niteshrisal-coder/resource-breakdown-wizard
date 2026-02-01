@@ -1155,14 +1155,18 @@ function EstimateComponent({
     setTimeout(() => setSaveStatus(""), 2000);
   }, [estimateRows]);
 
-  const calculateQuantity = (row: EstimateRow, allRows: EstimateRow[]): string => {
+  const calculateQuantity = (
+    row: EstimateRow,
+    allRows: EstimateRow[],
+  ): string => {
     const parseValue = (val: any, visited = new Set<string>()): number => {
-      if (typeof val !== "string" || val === null || val === undefined) return parseFloat(val as any) || 0;
+      if (typeof val !== "string" || val === null || val === undefined)
+        return parseFloat(val as any) || 0;
       const strVal = val.trim();
       if (strVal.startsWith("=")) {
         const formula = strVal.substring(1).trim().toUpperCase();
-        
-        const cellRef = `${row.id}`; 
+
+        const cellRef = `${row.id}`;
         if (visited.has(cellRef)) return 0;
         const newVisited = new Set(visited);
         newVisited.add(cellRef);
@@ -1171,7 +1175,7 @@ function EstimateComponent({
         if (matchCell) {
           const targetId = matchCell[1];
           const targetCol = matchCell[2].toLowerCase();
-          const targetRow = allRows.find(r => r.id === targetId);
+          const targetRow = allRows.find((r) => r.id === targetId);
           if (!targetRow) return 0;
           const targetVal = (targetRow as any)[targetCol];
           // RECURSIVE CALL: parseValue handles nested formulas
@@ -1181,7 +1185,9 @@ function EstimateComponent({
         const matchSn = formula.match(/^SN(\d+)$/);
         if (matchSn) {
           const targetSn = parseInt(matchSn[1]);
-          const targetRow = allRows.find(r => r.isMainItem && r.serialNo === targetSn);
+          const targetRow = allRows.find(
+            (r) => r.isMainItem && r.serialNo === targetSn,
+          );
           if (!targetRow) return 0;
           return parseFloat(targetRow.quantity as string) || 0;
         }
@@ -1189,7 +1195,7 @@ function EstimateComponent({
         const matchId = formula.match(/^#(\d+)$/);
         if (matchId) {
           const targetId = matchId[1];
-          const targetRow = allRows.find(r => r.id === targetId);
+          const targetRow = allRows.find((r) => r.id === targetId);
           if (!targetRow) return 0;
           return parseFloat(targetRow.quantity as string) || 0;
         }
@@ -1226,9 +1232,17 @@ function EstimateComponent({
     if (activeLinkingCell) {
       // If we are in "linking mode", click on another cell should create the reference
       const targetRow = estimateRows.find((r) => r.id === rowId);
-      if (targetRow && (rowId !== activeLinkingCell.rowId || column !== activeLinkingCell.column)) {
+      if (
+        targetRow &&
+        (rowId !== activeLinkingCell.rowId ||
+          column !== activeLinkingCell.column)
+      ) {
         const formula = `=R${rowId}_${column.toUpperCase()}`;
-        handleCellChange(activeLinkingCell.rowId, activeLinkingCell.column, formula);
+        handleCellChange(
+          activeLinkingCell.rowId,
+          activeLinkingCell.column,
+          formula,
+        );
         setActiveLinkingCell(null);
       }
     }
@@ -1237,7 +1251,11 @@ function EstimateComponent({
   const handleCellChange = (rowId: string, column: string, value: string) => {
     if (value.startsWith("=") && value.length === 1) {
       setActiveLinkingCell({ rowId, column });
-    } else if (activeLinkingCell?.rowId === rowId && activeLinkingCell?.column === column && !value.startsWith("=")) {
+    } else if (
+      activeLinkingCell?.rowId === rowId &&
+      activeLinkingCell?.column === column &&
+      !value.startsWith("=")
+    ) {
       setActiveLinkingCell(null);
     }
 
@@ -1251,7 +1269,8 @@ function EstimateComponent({
 
       // Recalculate all quantities multiple times to handle multi-step dependencies
       let finalRows = [...updatedRows];
-      for (let i = 0; i < 5; i++) { // Max 5 levels of dependency
+      for (let i = 0; i < 5; i++) {
+        // Max 5 levels of dependency
         finalRows = finalRows.map((r) => ({
           ...r,
           quantity: calculateQuantity(r, finalRows),
@@ -1262,12 +1281,13 @@ function EstimateComponent({
   };
 
   const getDisplayValue = (val: any, rowId: string, col: string): string => {
-    if (typeof val !== "string" || !val.startsWith("=")) return val?.toString() || "";
+    if (typeof val !== "string" || !val.startsWith("="))
+      return val?.toString() || "";
     if (focusedCell?.rowId === rowId && focusedCell?.column === col) return val;
-    
-    const row = estimateRows.find(r => r.id === rowId);
+
+    const row = estimateRows.find((r) => r.id === rowId);
     if (!row) return val;
-    
+
     const parseValue = (v: string, visited = new Set<string>()): number => {
       if (!v.startsWith("=")) return parseFloat(v) || 0;
       const formula = v.substring(1).trim().toUpperCase();
@@ -1275,18 +1295,21 @@ function EstimateComponent({
       if (matchCell) {
         const targetId = matchCell[1];
         const targetCol = matchCell[2].toLowerCase();
-        const targetRow = estimateRows.find(r => r.id === targetId);
+        const targetRow = estimateRows.find((r) => r.id === targetId);
         if (!targetRow) return 0;
         const targetVal = (targetRow as any)[targetCol];
         return parseValue(targetVal?.toString() || "0", visited);
       }
       return 0;
     };
-    
+
     return parseValue(val).toFixed(2);
   };
 
-  const [focusedCell, setFocusedCell] = useState<{rowId: string, column: string} | null>(null);
+  const [focusedCell, setFocusedCell] = useState<{
+    rowId: string;
+    column: string;
+  } | null>(null);
 
   const handleDescriptionSelect = (rowId: string, description: string) => {
     console.log(`Selected: ${description}`);
@@ -1466,7 +1489,12 @@ function EstimateComponent({
                         <span title={`ID: ${row.id}`}>{row.serialNo}</span>
                       </div>
                     ) : (
-                      <span className="ml-6 text-gray-500" title={`ID: ${row.id}`}>-</span>
+                      <span
+                        className="ml-6 text-gray-500"
+                        title={`ID: ${row.id}`}
+                      >
+                        -
+                      </span>
                     )}
                   </td>
                   <td className="border border-gray-300 p-2">
@@ -1485,7 +1513,11 @@ function EstimateComponent({
                       <Input
                         value={row.description as string}
                         onChange={(e) =>
-                          handleCellChange(row.id, "description", e.target.value)
+                          handleCellChange(
+                            row.id,
+                            "description",
+                            e.target.value,
+                          )
                         }
                         className="border-0 rounded-0 focus:bg-gray-50"
                         placeholder="Enter description"
@@ -1509,15 +1541,22 @@ function EstimateComponent({
                       <Input
                         value={getDisplayValue(row.length, row.id, "length")}
                         onClick={() => handleCellClick(row.id, "length")}
-                        onFocus={() => setFocusedCell({ rowId: row.id, column: "length" })}
+                        onFocus={() =>
+                          setFocusedCell({ rowId: row.id, column: "length" })
+                        }
                         onBlur={() => setFocusedCell(null)}
                         onChange={(e) =>
                           handleCellChange(row.id, "length", e.target.value)
                         }
                         className={`border-0 rounded-0 text-center ${
-                          activeLinkingCell?.rowId === row.id && activeLinkingCell?.column === "length" ? "ring-2 ring-orange-500" : ""
+                          activeLinkingCell?.rowId === row.id &&
+                          activeLinkingCell?.column === "length"
+                            ? "ring-2 ring-orange-500"
+                            : ""
                         } ${
-                          row.isMainItem ? "focus:bg-blue-50" : "focus:bg-gray-50"
+                          row.isMainItem
+                            ? "focus:bg-blue-50"
+                            : "focus:bg-gray-50"
                         }`}
                         placeholder="0.00"
                         onFocus={(e) => {
@@ -1538,15 +1577,22 @@ function EstimateComponent({
                       <Input
                         value={getDisplayValue(row.breadth, row.id, "breadth")}
                         onClick={() => handleCellClick(row.id, "breadth")}
-                        onFocus={() => setFocusedCell({ rowId: row.id, column: "breadth" })}
+                        onFocus={() =>
+                          setFocusedCell({ rowId: row.id, column: "breadth" })
+                        }
                         onBlur={() => setFocusedCell(null)}
                         onChange={(e) =>
                           handleCellChange(row.id, "breadth", e.target.value)
                         }
                         className={`border-0 rounded-0 text-center ${
-                          activeLinkingCell?.rowId === row.id && activeLinkingCell?.column === "breadth" ? "ring-2 ring-orange-500" : ""
+                          activeLinkingCell?.rowId === row.id &&
+                          activeLinkingCell?.column === "breadth"
+                            ? "ring-2 ring-orange-500"
+                            : ""
                         } ${
-                          row.isMainItem ? "focus:bg-blue-50" : "focus:bg-gray-50"
+                          row.isMainItem
+                            ? "focus:bg-blue-50"
+                            : "focus:bg-gray-50"
                         }`}
                         placeholder="0.00"
                         onFocus={(e) => {
@@ -1567,15 +1613,22 @@ function EstimateComponent({
                       <Input
                         value={getDisplayValue(row.height, row.id, "height")}
                         onClick={() => handleCellClick(row.id, "height")}
-                        onFocus={() => setFocusedCell({ rowId: row.id, column: "height" })}
+                        onFocus={() =>
+                          setFocusedCell({ rowId: row.id, column: "height" })
+                        }
                         onBlur={() => setFocusedCell(null)}
                         onChange={(e) =>
                           handleCellChange(row.id, "height", e.target.value)
                         }
                         className={`border-0 rounded-0 text-center ${
-                          activeLinkingCell?.rowId === row.id && activeLinkingCell?.column === "height" ? "ring-2 ring-orange-500" : ""
+                          activeLinkingCell?.rowId === row.id &&
+                          activeLinkingCell?.column === "height"
+                            ? "ring-2 ring-orange-500"
+                            : ""
                         } ${
-                          row.isMainItem ? "focus:bg-blue-50" : "focus:bg-gray-50"
+                          row.isMainItem
+                            ? "focus:bg-blue-50"
+                            : "focus:bg-gray-50"
                         }`}
                         placeholder="0.00"
                         onFocus={(e) => {
@@ -1596,15 +1649,22 @@ function EstimateComponent({
                       <Input
                         value={getDisplayValue(row.nos, row.id, "nos")}
                         onClick={() => handleCellClick(row.id, "nos")}
-                        onFocus={() => setFocusedCell({ rowId: row.id, column: "nos" })}
+                        onFocus={() =>
+                          setFocusedCell({ rowId: row.id, column: "nos" })
+                        }
                         onBlur={() => setFocusedCell(null)}
                         onChange={(e) =>
                           handleCellChange(row.id, "nos", e.target.value)
                         }
                         className={`border-0 rounded-0 text-center ${
-                          activeLinkingCell?.rowId === row.id && activeLinkingCell?.column === "nos" ? "ring-2 ring-orange-500" : ""
+                          activeLinkingCell?.rowId === row.id &&
+                          activeLinkingCell?.column === "nos"
+                            ? "ring-2 ring-orange-500"
+                            : ""
                         } ${
-                          row.isMainItem ? "focus:bg-blue-50" : "focus:bg-gray-50"
+                          row.isMainItem
+                            ? "focus:bg-blue-50"
+                            : "focus:bg-gray-50"
                         }`}
                         placeholder="0"
                       />
@@ -1813,10 +1873,13 @@ function BOQComponent({ estimateRows }: BOQComponentProps) {
           estimateMainItemId: mainItem.id,
         };
       });
-      
+
       // Merge with manual rows (those without estimateMainItemId)
-      const manualRows = prevBoq.filter(r => !r.estimateMainItemId);
-      return [...newBoqRows, ...manualRows].map((r, i) => ({ ...r, serialNo: i + 1 }));
+      const manualRows = prevBoq.filter((r) => !r.estimateMainItemId);
+      return [...newBoqRows, ...manualRows].map((r, i) => ({
+        ...r,
+        serialNo: i + 1,
+      }));
     });
   }, [estimateRows]);
 
