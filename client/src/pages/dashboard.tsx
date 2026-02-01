@@ -289,8 +289,6 @@ function RateAnalysisComponent() {
     value: string,
   ) => {
     const num = parseFloat(value);
-    // Porter: convert km to kosh (1 kosh = 3.22 km)
-    const porterDistanceKosh = kmToKosh(distances.porter || 0);
     setRatesData((prev) => {
       const updated = {
         ...prev,
@@ -309,7 +307,7 @@ function RateAnalysisComponent() {
         const unitWeight = Number.isNaN(num) ? 0 : num;
 
         // Porter: always convert km to kosh (1 kosh = 3.22 km)
-        const porterDistanceKosh = kmToKosh(distances.porter || 0);
+        const porterDistanceKosh = (distances.porter || 0) / 3.22;
         updated[resourceId].porterCost =
           porterCoeff * porterDistanceKosh * unitWeight;
 
@@ -405,7 +403,7 @@ function RateAnalysisComponent() {
       const unitWeight = updated[resourceId].unitWeight || 0;
 
       // Porter: always convert km to kosh (1 kosh = 3.22 km)
-      const porterDistanceKosh = kmToKosh(distances.porter || 0);
+      const porterDistanceKosh = (distances.porter || 0) / 3.22;
       updated[resourceId].porterCost =
         porterCoeff * porterDistanceKosh * unitWeight;
 
@@ -494,7 +492,7 @@ function RateAnalysisComponent() {
         const unitWeight = next[id].unitWeight || 0;
 
         // Porter: always convert km to kosh (1 kosh = 3.22 km)
-        const porterDistanceKosh = kmToKosh(distances.porter || 0);
+        const porterDistanceKosh = (distances.porter || 0) / 3.22;
         next[id].porterCost = porterCoeff * porterDistanceKosh * unitWeight;
 
         // Metalled & Gravelled cost logic depends on mode
@@ -976,7 +974,7 @@ function RateAnalysisComponent() {
             <br />•{" "}
             <span className="text-green-700 font-semibold">
               Porter Cost = Porter Coefficient × Porter Distance (
-              {kmToKosh(distances.porter || 0).toFixed(2)} kosh) × Unit Weight
+              {(distances.porter / 3.22).toFixed(2)} kosh) × Unit Weight
             </span>
             <br />•{" "}
             <span className="text-cyan-700 font-semibold">
@@ -1021,7 +1019,7 @@ function RateAnalysisComponent() {
                   const metalledCoeff = getMetalledCoefficient(category);
                   const gravelledCoeff = getGravelledCoefficient(category);
                   const unitWeight = ratesData[resource.id]?.unitWeight || 0;
-                  const porterDistanceKosh = kmToKosh(distances.porter || 0);
+                  const porterDistanceKosh = (distances.porter || 0) / 3.22;
                   const metalledDistanceKosh = kmToKosh(
                     distances.metalled || 0,
                   );
