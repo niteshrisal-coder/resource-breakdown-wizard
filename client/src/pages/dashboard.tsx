@@ -139,7 +139,7 @@ const koshToKm = (kosh: number): number => {
 function RateAnalysisComponent() {
   const { data: resources, isLoading } = useResourceColumns();
   const [modeOfTransport, setModeOfTransport] = useState<string>(() =>
-    getFromLocalStorage(STORAGE_KEYS.TRANSPORT_MODE, ""),
+    getFromLocalStorage(STORAGE_KEYS.TRANSPORT_MODE, "tractor"),
   );
 
   const [distances, setDistances] = useState<Distances>(() =>
@@ -161,24 +161,79 @@ function RateAnalysisComponent() {
     );
 
   const [metalledCoefficients, setMetalledCoefficients] =
-    useState<TransportCoefficients>(() =>
-      getFromLocalStorage(STORAGE_KEYS.METALLED_COEFFICIENTS, {
+    useState<TransportCoefficients>(() => {
+      const stored = localStorage.getItem(STORAGE_KEYS.METALLED_COEFFICIENTS);
+      if (stored) return JSON.parse(stored);
+      
+      const mode = getFromLocalStorage(STORAGE_KEYS.TRANSPORT_MODE, "tractor");
+      if (mode === "tractor") {
+        return {
+          easy: 0.074,
+          difficult: 0.074,
+          veryDifficult: 0.074,
+          highVolume: 0.074,
+        };
+      }
+      return {
         easy: 0.02,
         difficult: 0.02,
         veryDifficult: 0.022,
         highVolume: 0.022,
-      }),
-    );
+      };
+    });
 
   const [gravelledCoefficients, setGravelledCoefficients] =
-    useState<TransportCoefficients>(() =>
-      getFromLocalStorage(STORAGE_KEYS.GRAVELLED_COEFFICIENTS, {
+    useState<TransportCoefficients>(() => {
+      const stored = localStorage.getItem(STORAGE_KEYS.GRAVELLED_COEFFICIENTS);
+      if (stored) return JSON.parse(stored);
+
+      const mode = getFromLocalStorage(STORAGE_KEYS.TRANSPORT_MODE, "tractor");
+      if (mode === "tractor") {
+        return {
+          easy: 0.075,
+          difficult: 0.075,
+          veryDifficult: 0.075,
+          highVolume: 0.075,
+        };
+      }
+      return {
         easy: 0.049,
         difficult: 0.063,
         veryDifficult: 0.063,
         highVolume: 0.025,
-      }),
-    );
+      };
+    });
+
+  // Update coefficients when mode changes
+  useEffect(() => {
+    if (modeOfTransport === "tractor") {
+      setMetalledCoefficients({
+        easy: 0.074,
+        difficult: 0.074,
+        veryDifficult: 0.074,
+        highVolume: 0.074,
+      });
+      setGravelledCoefficients({
+        easy: 0.075,
+        difficult: 0.075,
+        veryDifficult: 0.075,
+        highVolume: 0.075,
+      });
+    } else if (modeOfTransport === "truck") {
+      setMetalledCoefficients({
+        easy: 0.02,
+        difficult: 0.02,
+        veryDifficult: 0.022,
+        highVolume: 0.022,
+      });
+      setGravelledCoefficients({
+        easy: 0.049,
+        difficult: 0.063,
+        veryDifficult: 0.063,
+        highVolume: 0.025,
+      });
+    }
+  }, [modeOfTransport]);
 
   const [ratesData, setRatesData] = useState<Record<string, RatesDataItem>>(
     () => getFromLocalStorage(STORAGE_KEYS.RATES_DATA, {}),
@@ -253,18 +308,25 @@ function RateAnalysisComponent() {
         const gravelledCoeff = getGravelledCoefficient(category);
         const unitWeight = Number.isNaN(num) ? 0 : num;
 
-        // Porter: convert km to kosh (1 kosh = 3.22 km)
+        // Porter: always convert km to kosh (1 kosh = 3.22 km)
         const porterDistanceKosh = kmToKosh(distances.porter || 0);
         updated[resourceId].porterCost =
           porterCoeff * porterDistanceKosh * unitWeight;
 
-        // Metalled & Gravelled: convert km to kosh first
-        const metalledDistanceKosh = kmToKosh(distances.metalled || 0);
-        const gravelledDistanceKosh = kmToKosh(distances.gravelled || 0);
-        updated[resourceId].metalledCost =
-          metalledCoeff * metalledDistanceKosh * unitWeight;
-        updated[resourceId].gravelledCost =
-          gravelledCoeff * gravelledDistanceKosh * unitWeight;
+        // Metalled & Gravelled cost logic depends on mode
+        if (modeOfTransport === "tractor") {
+          updated[resourceId].metalledCost =
+            metalledCoeff * (distances.metalled || 0) * unitWeight;
+          updated[resourceId].gravelledCost =
+            gravelledCoeff * (distances.gravelled || 0) * unitWeight;
+        } else {
+          const metalledDistanceKosh = kmToKosh(distances.metalled || 0);
+          const gravelledDistanceKosh = kmToKosh(distances.gravelled || 0);
+          updated[resourceId].metalledCost =
+            metalledCoeff * metalledDistanceKosh * unitWeight;
+          updated[resourceId].gravelledCost =
+            gravelledCoeff * gravelledDistanceKosh * unitWeight;
+        }
       }
 
       return updated;
@@ -342,18 +404,25 @@ function RateAnalysisComponent() {
       const gravelledCoeff = getGravelledCoefficient(value);
       const unitWeight = updated[resourceId].unitWeight || 0;
 
-      // Porter: convert km to kosh (1 kosh = 3.22 km)
+      // Porter: always convert km to kosh (1 kosh = 3.22 km)
       const porterDistanceKosh = kmToKosh(distances.porter || 0);
       updated[resourceId].porterCost =
         porterCoeff * porterDistanceKosh * unitWeight;
 
-      // Metalled & Gravelled: convert km to kosh first
-      const metalledDistanceKosh = kmToKosh(distances.metalled || 0);
-      const gravelledDistanceKosh = kmToKosh(distances.gravelled || 0);
-      updated[resourceId].metalledCost =
-        metalledCoeff * metalledDistanceKosh * unitWeight;
-      updated[resourceId].gravelledCost =
-        gravelledCoeff * gravelledDistanceKosh * unitWeight;
+      // Metalled & Gravelled cost logic depends on mode
+      if (modeOfTransport === "tractor") {
+        updated[resourceId].metalledCost =
+          metalledCoeff * (distances.metalled || 0) * unitWeight;
+        updated[resourceId].gravelledCost =
+          gravelledCoeff * (distances.gravelled || 0) * unitWeight;
+      } else {
+        const metalledDistanceKosh = kmToKosh(distances.metalled || 0);
+        const gravelledDistanceKosh = kmToKosh(distances.gravelled || 0);
+        updated[resourceId].metalledCost =
+          metalledCoeff * metalledDistanceKosh * unitWeight;
+        updated[resourceId].gravelledCost =
+          gravelledCoeff * gravelledDistanceKosh * unitWeight;
+      }
 
       return updated;
     });
@@ -424,17 +493,22 @@ function RateAnalysisComponent() {
         const gravelledCoeff = getGravelledCoefficient(category);
         const unitWeight = next[id].unitWeight || 0;
 
-        // Porter: convert km to kosh (1 kosh = 3.22 km)
+        // Porter: always convert km to kosh (1 kosh = 3.22 km)
         const porterDistanceKosh = kmToKosh(distances.porter || 0);
         next[id].porterCost = porterCoeff * porterDistanceKosh * unitWeight;
 
-        // Metalled & Gravelled: convert km to kosh first
-        const metalledDistanceKosh = kmToKosh(distances.metalled || 0);
-        const gravelledDistanceKosh = kmToKosh(distances.gravelled || 0);
-        next[id].metalledCost =
-          metalledCoeff * metalledDistanceKosh * unitWeight;
-        next[id].gravelledCost =
-          gravelledCoeff * gravelledDistanceKosh * unitWeight;
+        // Metalled & Gravelled cost logic depends on mode
+        if (modeOfTransport === "tractor") {
+          // Tractor: Metalled/Gravelled use KM directly
+          next[id].metalledCost = metalledCoeff * (distances.metalled || 0) * unitWeight;
+          next[id].gravelledCost = gravelledCoeff * (distances.gravelled || 0) * unitWeight;
+        } else {
+          // Truck: Metalled/Gravelled use Kosh conversion
+          const metalledDistanceKosh = kmToKosh(distances.metalled || 0);
+          const gravelledDistanceKosh = kmToKosh(distances.gravelled || 0);
+          next[id].metalledCost = metalledCoeff * metalledDistanceKosh * unitWeight;
+          next[id].gravelledCost = gravelledCoeff * gravelledDistanceKosh * unitWeight;
+        }
       });
       return next;
     });
@@ -445,6 +519,7 @@ function RateAnalysisComponent() {
     porterCoefficients,
     metalledCoefficients,
     gravelledCoefficients,
+    modeOfTransport,
   ]);
 
   const getDistanceUnit = (): string => {
@@ -534,11 +609,13 @@ function RateAnalysisComponent() {
                       />
                     </TableCell>
                     <TableCell className="font-semibold text-cyan-700">
-                      {kmToKosh(distances.metalled).toFixed(2)} kosh
+                      {modeOfTransport === "truck" ? `${kmToKosh(distances.metalled).toFixed(2)} kosh` : `${(distances.metalled || 0).toFixed(2)} km`}
                     </TableCell>
                     <TableCell className="text-xs bg-cyan-50 p-2 rounded">
                       <strong>Metalled Cost</strong> = Coeff ×{" "}
-                      {kmToKosh(distances.metalled).toFixed(2)} kosh × Unit
+                      {modeOfTransport === "truck" 
+                        ? `${kmToKosh(distances.metalled).toFixed(2)} kosh` 
+                        : `${(distances.metalled || 0).toFixed(2)} km`} × Unit
                       Weight
                     </TableCell>
                   </TableRow>
@@ -559,11 +636,13 @@ function RateAnalysisComponent() {
                       />
                     </TableCell>
                     <TableCell className="font-semibold text-amber-700">
-                      {kmToKosh(distances.gravelled).toFixed(2)} kosh
+                      {modeOfTransport === "truck" ? `${kmToKosh(distances.gravelled).toFixed(2)} kosh` : `${(distances.gravelled || 0).toFixed(2)} km`}
                     </TableCell>
                     <TableCell className="text-xs bg-amber-50 p-2 rounded">
                       <strong>Gravelled Cost</strong> = Coeff ×{" "}
-                      {kmToKosh(distances.gravelled).toFixed(2)} kosh × Unit
+                      {modeOfTransport === "truck" 
+                        ? `${kmToKosh(distances.gravelled).toFixed(2)} kosh` 
+                        : `${(distances.gravelled || 0).toFixed(2)} km`} × Unit
                       Weight
                     </TableCell>
                   </TableRow>
