@@ -209,7 +209,8 @@ export function QuantityTable() {
               <TableRow className="bg-muted/30 hover:bg-muted/40">
                 <TableHead className="w-[80px]">Serial #</TableHead>
                 <TableHead className="w-[100px]">Ref SS</TableHead>
-                <TableHead className="min-w-[200px] whitespace-normal">Description</TableHead>
+                <TableHead className="min-w-[200px] whitespace-normal">Description of Works</TableHead>
+                <TableHead className="w-[80px]">Unit</TableHead>
                 <TableHead className="w-[80px]">Norms Basis</TableHead>
                 <TableHead className="w-[100px] text-right">Actual Qty</TableHead>
                 
@@ -237,6 +238,7 @@ export function QuantityTable() {
                   <TableCell className="max-w-[300px] whitespace-normal break-words" title={item.description}>
                     {item.description}
                   </TableCell>
+                  <TableCell className="text-muted-foreground font-medium">{item.unit || "-"}</TableCell>
                   <TableCell className="p-2">
                     <Input
                       className="h-8 text-right font-mono text-xs focus:ring-1 focus:ring-primary bg-background shadow-none"
