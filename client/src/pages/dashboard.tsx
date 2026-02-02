@@ -292,8 +292,10 @@ function RateAnalysisComponent() {
   const calculateMetalledCost = (resourceId: string, itemCategory: string, unitWeight: number) => {
     const metalledCoeff = getMetalledCoefficient(itemCategory);
     if (modeOfTransport === "tractor") {
+      // Tractor: Metalled uses KM directly
       return metalledCoeff * (distances.metalled || 0) * unitWeight;
     } else {
+      // Truck: Metalled uses Kosh conversion
       const metalledDistanceKosh = (distances.metalled || 0) / 3.22;
       return metalledCoeff * metalledDistanceKosh * unitWeight;
     }
@@ -302,8 +304,10 @@ function RateAnalysisComponent() {
   const calculateGraveledCost = (resourceId: string, itemCategory: string, unitWeight: number) => {
     const gravelledCoeff = getGravelledCoefficient(itemCategory);
     if (modeOfTransport === "tractor") {
+      // Tractor: Gravelled uses KM directly
       return gravelledCoeff * (distances.gravelled || 0) * unitWeight;
     } else {
+      // Truck: Gravelled uses Kosh conversion
       const gravelledDistanceKosh = (distances.gravelled || 0) / 3.22;
       return gravelledCoeff * gravelledDistanceKosh * unitWeight;
     }
