@@ -293,11 +293,11 @@ function RateAnalysisComponent() {
     const metalledCoeff = getMetalledCoefficient(itemCategory);
     if (modeOfTransport === "tractor") {
       // Tractor: Metalled uses KM directly
-      return metalledCoeff * (distances.metalled || 0) * unitWeight;
+      return (metalledCoeff || 0) * (distances.metalled || 0) * (unitWeight || 0);
     } else {
       // Truck: Metalled uses Kosh conversion
       const metalledDistanceKosh = (distances.metalled || 0) / 3.22;
-      return metalledCoeff * metalledDistanceKosh * unitWeight;
+      return (metalledCoeff || 0) * metalledDistanceKosh * (unitWeight || 0);
     }
   };
 
@@ -305,11 +305,11 @@ function RateAnalysisComponent() {
     const gravelledCoeff = getGravelledCoefficient(itemCategory);
     if (modeOfTransport === "tractor") {
       // Tractor: Gravelled uses KM directly
-      return gravelledCoeff * (distances.gravelled || 0) * unitWeight;
+      return (gravelledCoeff || 0) * (distances.gravelled || 0) * (unitWeight || 0);
     } else {
       // Truck: Gravelled uses Kosh conversion
       const gravelledDistanceKosh = (distances.gravelled || 0) / 3.22;
-      return gravelledCoeff * gravelledDistanceKosh * unitWeight;
+      return (gravelledCoeff || 0) * gravelledDistanceKosh * (unitWeight || 0);
     }
   };
 
