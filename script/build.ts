@@ -1,6 +1,6 @@
-// Simple build script that just runs TypeScript compiler
 import { execSync } from "child_process";
 
 console.log("Building for production...");
-execSync("npx tsc", { stdio: "inherit" });
+// Build TypeScript
+execSync("npx tsc -p tsconfig.prod.json", { stdio: "inherit" });
 console.log("Build completed!");
