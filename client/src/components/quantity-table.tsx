@@ -1,3 +1,4 @@
+import { EditResourceDialog } from "@/components/edit-resource-dialog";
 import React, { useState, useEffect } from "react";
 import {
   DndContext,
@@ -85,30 +86,36 @@ function SortableHeader({ col, deleteResource }: { col: any; deleteResource: any
         <span className="font-semibold text-primary select-none">{col.name}</span>
         <span className="text-xs text-muted-foreground font-normal select-none">({col.unit})</span>
         
-        <AlertDialog>
-          <AlertDialogTrigger asChild>
-            <button className="absolute -top-1 -right-1 opacity-0 group-hover:opacity-100 p-1 rounded-full bg-destructive text-destructive-foreground hover:bg-destructive/90 transition-opacity">
-              <Trash2 className="w-3 h-3" />
-            </button>
-          </AlertDialogTrigger>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Delete Resource Column?</AlertDialogTitle>
-              <AlertDialogDescription>
-                This will permanently delete "{col.name}" and all associated data.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction 
-                onClick={() => deleteResource.mutate(col.id)}
-                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              >
-                Delete
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+        {/* EDIT BUTTON - Add this section */}
+        <div className="absolute -top-1 -right-1 opacity-0 group-hover:opacity-100 flex gap-1 transition-opacity">
+          <EditResourceDialog resource={col} />
+          
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <button className="p-1 rounded-full bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                <Trash2 className="w-3 h-3" />
+              </button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Delete Resource Column?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This will permanently delete "{col.name}" and all associated data.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction 
+                  onClick={() => deleteResource.mutate(col.id)}
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                >
+                  Delete
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
+        {/* END EDIT BUTTON SECTION */}
       </div>
     </TableHead>
   );
@@ -165,9 +172,9 @@ export function QuantityTable() {
   ) => {
     if (newValue && isNaN(Number(newValue))) return;
     updateWorkItem.mutate({
-      id,
-      data: { [field]: newValue || "0" },
-    });
+  id,
+  [field]: newValue || "0",
+});
   };
 
   const calculateTotal = (normsBasis: string, actual: string, resourceValue: string | undefined) => {
@@ -240,13 +247,14 @@ export function QuantityTable() {
                   </TableCell>
                   <TableCell className="text-muted-foreground font-medium">{item.unit || "-"}</TableCell>
                   <TableCell className="p-2">
-                    <Input
-                      className="h-8 text-right font-mono text-xs focus:ring-1 focus:ring-primary bg-background shadow-none"
-                      defaultValue={item.normsBasisQty}
-                      onBlur={(e) => {
-                        if (e.target.value !== item.normsBasisQty) {
-                          handleWorkItemUpdate(item.id, "normsBasisQty", e.target.value);
-                        }
+<Input
+    id={`normsBasisQty-${item.id}`}
+    name="normsBasisQty"
+    className="h-8 text-right font-mono text-xs focus:ring-1 focus:ring-primary bg-background shadow-none"
+    defaultValue={item.normsBasisQty}
+    onBlur={(e) => {
+        if (e.target.value !== item.normsBasisQty) {
+            handleWorkItemUpdate(item.id, "normsBasisQty", e.target.value);                        }
                       }}
                     />
                   </TableCell>

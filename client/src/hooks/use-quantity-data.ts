@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api, buildUrl } from "@shared/routes";
 import { type InsertWorkItem, type InsertResourceColumn, type InsertResourceConstant } from "@shared/schema";
 import { z } from "zod";
@@ -20,35 +20,14 @@ export function useCreateWorkItem() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (data: InsertWorkItem) => {
-      // Ensure numeric fields are numbers (input="number" returns strings sometimes)
-      const payload = {
-        ...data,
-        quantity: String(data.quantity) // API schema expects numeric string for precision or number? Schema says numeric which is usually string in JS to preserve precision, but Zod might want number.
-        // Checking schema: quantity is numeric in pg, z.infer types it as string usually for drizzle-zod unless configured.
-        // Let's coerce in form.
-      };
-
-      const validated = api.workItems.create.input.parse(payload);
-      
+      const validated = api.workItems.create.input.parse(data);
       const res = await fetch(api.workItems.create.path, {
         method: api.workItems.create.method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(validated),
         credentials: "include",
       });
-
-      if (!res.ok) {
-        if (res.status === 400) {
-           // Try to parse error
-           try {
-             const error = api.workItems.create.responses[400].parse(await res.json());
-             throw new Error(error.message);
-           } catch {
-             throw new Error("Validation failed");
-           }
-        }
-        throw new Error("Failed to create work item");
-      }
+      if (!res.ok) throw new Error("Failed to create work item");
       return api.workItems.create.responses[201].parse(await res.json());
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: [api.workItems.list.path] }),
@@ -58,12 +37,13 @@ export function useCreateWorkItem() {
 export function useUpdateWorkItem() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, data }: { id: number; data: Partial<InsertWorkItem> }) => {
+    mutationFn: async ({ id, ...data }: { id: number } & Partial<InsertWorkItem>) => {
+      const validated = api.workItems.update.input.parse(data);
       const url = buildUrl(api.workItems.update.path, { id });
       const res = await fetch(url, {
         method: api.workItems.update.method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        body: JSON.stringify(validated),
         credentials: "include",
       });
       if (!res.ok) throw new Error("Failed to update work item");
@@ -116,6 +96,25 @@ export function useCreateResourceColumn() {
   });
 }
 
+export function useUpdateResourceColumn() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...data }: { id: number } & Partial<InsertResourceColumn>) => {
+      const validated = api.resourceColumns.update.input.parse(data);
+      const url = buildUrl(api.resourceColumns.update.path, { id });
+      const res = await fetch(url, {
+        method: api.resourceColumns.update.method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(validated),
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("Failed to update resource column");
+      return api.resourceColumns.update.responses[200].parse(await res.json());
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: [api.resourceColumns.list.path] }),
+  });
+}
+
 export function useDeleteResourceColumn() {
   const queryClient = useQueryClient();
   return useMutation({
@@ -151,23 +150,18 @@ export function useUpsertResourceConstant() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (data: InsertResourceConstant) => {
-      // Coerce constantValue to string if it's a number, as numeric usually expects string in json
-      const payload = {
-        ...data,
-        constantValue: String(data.constantValue)
-      };
-      const validated = api.resourceConstants.upsert.input.parse(payload);
-      
+      const validated = api.resourceConstants.upsert.input.parse(data);
       const res = await fetch(api.resourceConstants.upsert.path, {
         method: api.resourceConstants.upsert.method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(validated),
         credentials: "include",
       });
-      if (!res.ok) throw new Error("Failed to save constant");
+      if (!res.ok) throw new Error("Failed to upsert resource constant");
       return api.resourceConstants.upsert.responses[200].parse(await res.json());
     },
-    // Optimistic updates are great, but invalidating lists ensures consistency
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: [api.workItems.list.path] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [api.workItems.list.path] });
+    },
   });
 }

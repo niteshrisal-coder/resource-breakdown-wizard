@@ -23,6 +23,7 @@ export interface IStorage {
   // Resource Columns
   getResourceColumns(): Promise<ResourceColumn[]>;
   createResourceColumn(column: InsertResourceColumn): Promise<ResourceColumn>;
+  updateResourceColumn(id: number, column: Partial<InsertResourceColumn>): Promise<ResourceColumn>;
   deleteResourceColumn(id: number): Promise<void>;
   reorderResourceColumns(columnIds: number[]): Promise<void>;
 
@@ -46,11 +47,15 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateWorkItem(id: number, updates: Partial<InsertWorkItem>): Promise<WorkItem> {
-    const [updatedItem] = await db.update(workItems)
+    const [updated] = await db
+      .update(workItems)
       .set(updates)
       .where(eq(workItems.id, id))
       .returning();
-    return updatedItem;
+    if (!updated) {
+      throw new Error(`Work item with id ${id} not found`);
+    }
+    return updated;
   }
 
   async deleteWorkItem(id: number): Promise<void> {
@@ -64,6 +69,18 @@ export class DatabaseStorage implements IStorage {
   async createResourceColumn(column: InsertResourceColumn): Promise<ResourceColumn> {
     const [newColumn] = await db.insert(resourceColumns).values(column).returning();
     return newColumn;
+  }
+
+  async updateResourceColumn(id: number, column: Partial<InsertResourceColumn>): Promise<ResourceColumn> {
+    const [updatedColumn] = await db
+      .update(resourceColumns)
+      .set(column)
+      .where(eq(resourceColumns.id, id))
+      .returning();
+    if (!updatedColumn) {
+      throw new Error(`Resource column with id ${id} not found`);
+    }
+    return updatedColumn;
   }
 
   async deleteResourceColumn(id: number): Promise<void> {
@@ -81,25 +98,26 @@ export class DatabaseStorage implements IStorage {
   }
 
   async upsertResourceConstant(constant: InsertResourceConstant): Promise<ResourceConstant> {
-    // Check if it exists
-    const existing = await db.select().from(resourceConstants).where(
-      and(
-        eq(resourceConstants.workItemId, constant.workItemId),
-        eq(resourceConstants.resourceColumnId, constant.resourceColumnId)
-      )
-    );
+    const [existing] = await db
+      .select()
+      .from(resourceConstants)
+      .where(
+        and(
+          eq(resourceConstants.workItemId, constant.workItemId),
+          eq(resourceConstants.resourceColumnId, constant.resourceColumnId)
+        )
+      );
 
-    if (existing.length > 0) {
-      const [updated] = await db.update(resourceConstants)
+    if (existing) {
+      const [updated] = await db
+        .update(resourceConstants)
         .set({ constantValue: constant.constantValue })
-        .where(eq(resourceConstants.id, existing[0].id))
+        .where(eq(resourceConstants.id, existing.id))
         .returning();
-      return updated;
+      return updated!;
     } else {
-      const [inserted] = await db.insert(resourceConstants)
-        .values(constant)
-        .returning();
-      return inserted;
+      const [newConstant] = await db.insert(resourceConstants).values(constant).returning();
+      return newConstant;
     }
   }
 }

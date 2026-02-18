@@ -17,7 +17,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Plus, Trash2, Download, ChevronLeft, Upload, FileText, X, Eye } from "lucide-react";
-import { useUpload } from "@/hooks/use-upload";
+import { useUpload } from "../hooks/use-upload";
 
 interface Project {
   id: string;
@@ -62,24 +62,34 @@ export const BidResponse: React.FC<BidResponseProps> = ({
   const { uploadFile, isUploading } = useUpload({
     onSuccess: (response: any, file: File) => {
       console.log("Upload success response:", response);
-      // Create a new bid response from uploaded file
+      console.log(`Uploaded file: ${file.name}`);
+      
+      // Create a new bid response from uploaded file with unique ID
       const newBidResponse: BidResponse = {
-        id: Date.now().toString(),
+        id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`, // More unique ID
         fileName: file.name,
         fileSize: formatFileSize(file.size),
         uploadDate: new Date().toISOString().split("T")[0],
         documentUrl: response.objectPath,
       };
 
-      const updatedResponses = [...bidResponses, newBidResponse];
-      setBidResponses(updatedResponses);
-      localStorage.setItem(`bid_responses_${project.id}`, JSON.stringify(updatedResponses));
+      console.log(`Adding ${file.name} to bid responses`);
+
+      // Use functional update to avoid race conditions
+      setBidResponses(prevResponses => {
+        const updatedResponses = [...prevResponses, newBidResponse];
+        console.log(`Total bid responses: ${updatedResponses.length}`);
+        localStorage.setItem(`bid_responses_${project.id}`, JSON.stringify(updatedResponses));
+        return updatedResponses;
+      });
 
       // Remove file from uploading list
       setUploadingFiles(prev => prev.filter(f => f.file !== file));
+      
+      // Also remove from selected files (already cleared in handleUploadAll)
     },
     onError: (error: Error, file: File) => {
-      console.error("Upload error:", error);
+      console.error(`Upload error for ${file.name}:`, error);
       // Update the file with error
       setUploadingFiles(prev => 
         prev.map(f => 
@@ -138,13 +148,36 @@ export const BidResponse: React.FC<BidResponseProps> = ({
   const handleUploadAll = async () => {
     if (selectedFiles.length === 0) return;
 
-    // Upload each file
-    for (const file of selectedFiles) {
-      await uploadFile(file);
-    }
+    console.log(`Starting upload of ${selectedFiles.length} files`);
 
-    // Clear selected files after upload
+    // Create a copy of files to upload
+    const filesToUpload = [...selectedFiles];
+    
+    // Clear selected files immediately so they don't show in UI
     setSelectedFiles([]);
+    
+    try {
+      // Upload files one by one to prevent race conditions
+      for (let i = 0; i < filesToUpload.length; i++) {
+        const file = filesToUpload[i];
+        console.log(`Uploading file ${i + 1}/${filesToUpload.length}: ${file.name}`);
+        await uploadFile(file);
+        console.log(`Completed: ${file.name}`);
+      }
+      
+      console.log("All files uploaded successfully");
+      
+      // Close the dialog after successful upload
+      setTimeout(() => {
+        setIsDialogOpen(false);
+      }, 1000);
+      
+    } catch (error) {
+      console.error("Some uploads failed:", error);
+      // Add back any files that weren't uploaded
+      setSelectedFiles(filesToUpload);
+      alert("Some files failed to upload. Check console for details.");
+    }
   };
 
   const handleDeleteBidResponse = (id: string) => {

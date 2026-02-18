@@ -35,7 +35,8 @@ import {
   RefreshCw,
   Save,
 } from "lucide-react";
-import Papa from "papaparse";
+
+import * as Papa from "papaparse";
 
 interface EstimateRow {
   id: string;
@@ -55,7 +56,7 @@ interface EstimateRow {
 
 interface BOQRow {
   id: string;
-  serialNo: string | number;
+  serialNo: number;
   description: string;
   unit: string;
   quantity: string | number;
@@ -136,7 +137,13 @@ const koshToKm = (kosh: number): number => {
   return kosh * 3.22;
 };
 
-function RateAnalysisComponent() {
+function RateAnalysisComponent({
+  ratesData,
+  setRatesData,
+}: {
+  ratesData: Record<string, RatesDataItem>;
+  setRatesData: React.Dispatch<React.SetStateAction<Record<string, RatesDataItem>>>;
+}) {
   const { data: resources, isLoading } = useResourceColumns();
   const [modeOfTransport, setModeOfTransport] = useState<string>(() =>
     getFromLocalStorage(STORAGE_KEYS.TRANSPORT_MODE, "tractor"),
@@ -234,10 +241,6 @@ function RateAnalysisComponent() {
       });
     }
   }, [modeOfTransport]);
-
-  const [ratesData, setRatesData] = useState<Record<string, RatesDataItem>>(
-    () => getFromLocalStorage(STORAGE_KEYS.RATES_DATA, {}),
-  );
 
   const [saveStatus, setSaveStatus] = useState<string>("");
 
@@ -463,7 +466,7 @@ function RateAnalysisComponent() {
     const num = parseFloat(value) || 0;
     setPorterCoefficients((prev) => ({
       ...prev,
-      [category]: num,
+      [category as keyof PorterCoefficients]: num,
     }));
   };
 
@@ -471,7 +474,7 @@ function RateAnalysisComponent() {
     const num = parseFloat(value) || 0;
     setMetalledCoefficients((prev) => ({
       ...prev,
-      [category]: num,
+      [category as keyof TransportCoefficients]: num,
     }));
   };
 
@@ -482,7 +485,7 @@ function RateAnalysisComponent() {
     const num = parseFloat(value) || 0;
     setGravelledCoefficients((prev) => ({
       ...prev,
-      [category]: num,
+      [category as keyof TransportCoefficients]: num,
     }));
   };
 
@@ -630,7 +633,6 @@ function RateAnalysisComponent() {
                       {modeOfTransport === "truck" 
                         ? `${kmToKosh(distances.metalled).toFixed(2)} kosh` 
                         : `${(distances.metalled || 0).toFixed(2)} km`} × Unit
-                      Weight
                     </TableCell>
                   </TableRow>
                   <TableRow>
@@ -657,7 +659,6 @@ function RateAnalysisComponent() {
                       {modeOfTransport === "truck" 
                         ? `${kmToKosh(distances.gravelled).toFixed(2)} kosh` 
                         : `${(distances.gravelled || 0).toFixed(2)} km`} × Unit
-                      Weight
                     </TableCell>
                   </TableRow>
                   <TableRow className="bg-blue-50 border-t-2 border-blue-300">
@@ -1036,15 +1037,15 @@ function RateAnalysisComponent() {
               </TableHeader>
               <TableBody>
                 {resources.map((resource, idx) => {
-                  const category = ratesData[resource.id]?.category || "1";
+                  const category = String(ratesData[resource.id]?.category || "1");
                   const porterCoeff = getPorterCoefficient(category);
                   const metalledCoeff = getMetalledCoefficient(category);
                   const gravelledCoeff = getGravelledCoefficient(category);
-                  const unitWeight = ratesData[resource.id]?.unitWeight || 0;
+                  const unitWeight = (ratesData[resource.id]?.unitWeight || 0) as number;
 
-                  const calculatedPorterCost = calculatePorterCost(resource.id, category, unitWeight);
-                  const calculatedMetalledCost = calculateMetalledCost(resource.id, category, unitWeight);
-                  const calculatedGravelledCost = calculateGraveledCost(resource.id, category, unitWeight);
+                  const calculatedPorterCost = calculatePorterCost(String(resource.id), category, unitWeight);
+                  const calculatedMetalledCost = calculateMetalledCost(String(resource.id), category, unitWeight);
+                  const calculatedGravelledCost = calculateGraveledCost(String(resource.id), category, unitWeight);
 
                   return (
                     <TableRow key={resource.id}>
@@ -1056,7 +1057,7 @@ function RateAnalysisComponent() {
                         <Select
                           value={ratesData[resource.id]?.category || ""}
                           onValueChange={(val) =>
-                            handleCategoryChange(resource.id, val)
+                            handleCategoryChange(String(resource.id), val)
                           }
                         >
                           <SelectTrigger className="w-[100px]">
@@ -1077,7 +1078,7 @@ function RateAnalysisComponent() {
                           value={ratesData[resource.id]?.rateExcl ?? ""}
                           onChange={(e) =>
                             handleRateFieldChange(
-                              resource.id,
+                              String(resource.id),
                               "rateExcl",
                               e.target.value,
                             )
@@ -1090,13 +1091,13 @@ function RateAnalysisComponent() {
                         <input
                           type="checkbox"
                           checked={ratesData[resource.id]?.isVatable ?? false}
-                          onChange={() => handleVatToggle(resource.id)}
+                          onChange={() => handleVatToggle(String(resource.id))}
                           className="w-5 h-5 cursor-pointer"
                           title="Mark as vatable material"
                         />
                       </TableCell>
                       <TableCell className="bg-blue-50 font-semibold text-center">
-                        {calculateVat(resource.id).toFixed(2)}
+                        {calculateVat(String(resource.id)).toFixed(2)}
                       </TableCell>
                       <TableCell>
                         <Input
@@ -1105,7 +1106,7 @@ function RateAnalysisComponent() {
                           value={ratesData[resource.id]?.unitWeight ?? ""}
                           onChange={(e) =>
                             handleRateFieldChange(
-                              resource.id,
+                              String(resource.id),
                               "unitWeight",
                               e.target.value,
                             )
@@ -1140,7 +1141,7 @@ function RateAnalysisComponent() {
                           value={ratesData[resource.id]?.loadUnload ?? ""}
                           onChange={(e) =>
                             handleRateFieldChange(
-                              resource.id,
+                              String(resource.id),
                               "loadUnload",
                               e.target.value,
                             )
@@ -1150,7 +1151,7 @@ function RateAnalysisComponent() {
                         />
                       </TableCell>
                       <TableCell className="text-right font-bold bg-yellow-50 text-amber-900">
-                        {calculateLandedRate(resource.id).toFixed(2)}
+                        {(calculateLandedRate(String(resource.id)) as number).toFixed(2)}
                       </TableCell>
                     </TableRow>
                   );
@@ -1409,9 +1410,10 @@ function EstimateComponent({
   };
 
   const addMainRow = () => {
-    const newId = (
-      Math.max(...estimateRows.map((r) => parseInt(r.id)), 0) + 1
-    ).toString();
+    const maxId = estimateRows.length > 0 
+      ? Math.max(...estimateRows.map((r) => parseInt(r.id))) 
+      : 0;
+    const newId = (maxId + 1).toString();
     const mainItems = estimateRows.filter((r) => r.isMainItem);
     const newSerialNo = mainItems.length + 1;
     setEstimateRows([
@@ -1434,9 +1436,10 @@ function EstimateComponent({
   };
 
   const addSubRow = (parentId: string) => {
-    const newId = (
-      Math.max(...estimateRows.map((r) => parseInt(r.id)), 0) + 1
-    ).toString();
+    const maxId = estimateRows.length > 0 
+      ? Math.max(...estimateRows.map((r) => parseInt(r.id))) 
+      : 0;
+    const newId = (maxId + 1).toString();
     const insertIndex = estimateRows.findIndex((r) => r.id === parentId) + 1;
     const newRows = [...estimateRows];
     newRows.splice(insertIndex, 0, {
@@ -1652,11 +1655,6 @@ function EstimateComponent({
                             : "focus:bg-gray-50"
                         }`}
                         placeholder="0.00"
-                        onFocus={(e) => {
-                          if (e.target.value.startsWith("=")) {
-                            // Keep formula visible during editing
-                          }
-                        }}
                       />
                       {row.length?.toString().startsWith("=") && (
                         <div className="absolute right-1 top-1 text-[10px] text-blue-500 font-bold opacity-0 group-hover:opacity-100 bg-white/80 px-1 rounded">
@@ -1688,11 +1686,6 @@ function EstimateComponent({
                             : "focus:bg-gray-50"
                         }`}
                         placeholder="0.00"
-                        onFocus={(e) => {
-                          if (e.target.value.startsWith("=")) {
-                            // Keep formula visible during editing
-                          }
-                        }}
                       />
                       {row.breadth?.toString().startsWith("=") && (
                         <div className="absolute right-1 top-1 text-[10px] text-blue-500 font-bold opacity-0 group-hover:opacity-100 bg-white/80 px-1 rounded">
@@ -1724,11 +1717,6 @@ function EstimateComponent({
                             : "focus:bg-gray-50"
                         }`}
                         placeholder="0.00"
-                        onFocus={(e) => {
-                          if (e.target.value.startsWith("=")) {
-                            // Keep formula visible during editing
-                          }
-                        }}
                       />
                       {row.height?.toString().startsWith("=") && (
                         <div className="absolute right-1 top-1 text-[10px] text-blue-500 font-bold opacity-0 group-hover:opacity-100 bg-white/80 px-1 rounded">
@@ -1987,9 +1975,10 @@ function BOQComponent({ estimateRows }: BOQComponentProps) {
   };
 
   const addRow = () => {
-    const newId = (
-      Math.max(...boqRows.map((r) => parseInt(r.id)), 0) + 1
-    ).toString();
+    const maxId = boqRows.length > 0 
+      ? Math.max(...boqRows.map((r) => parseInt(r.id) || 0)) 
+      : 0;
+    const newId = (maxId + 1).toString();
     const newSerialNo = boqRows.length + 1;
     setBoqRows([
       ...boqRows,
@@ -2271,6 +2260,10 @@ export function QuantityBreakdownDashboard() {
     ]),
   );
 
+  const [ratesData, setRatesData] = useState<Record<string, RatesDataItem>>(
+    () => getFromLocalStorage(STORAGE_KEYS.RATES_DATA, {}),
+  );
+
   const handleExportCSV = () => {
     if (!workItems || !columns) return;
 
@@ -2402,7 +2395,7 @@ export function QuantityBreakdownDashboard() {
           </TabsContent>
 
           <TabsContent value="rate" className="mt-6">
-            <RateAnalysisComponent />
+            <RateAnalysisComponent ratesData={ratesData} setRatesData={setRatesData} />
           </TabsContent>
         </Tabs>
       </div>
@@ -2410,7 +2403,7 @@ export function QuantityBreakdownDashboard() {
   );
 }
 
-export function ProcurementManagementDashboard() {
+export function ProcurementManagementDashboard({ ratesData }: { ratesData: Record<string, RatesDataItem> }) {
   const { data: workItems } = useWorkItems();
 
   return (
@@ -2483,52 +2476,77 @@ export function ProcurementManagementDashboard() {
                     <TableHead className="w-[60px]">S.No</TableHead>
                     <TableHead className="w-[250px]">Material Name</TableHead>
                     <TableHead className="w-[100px]">Unit</TableHead>
-                    <TableHead className="w-[100px]">Quantity</TableHead>
-                    <TableHead className="w-[100px]">Estimated Rate</TableHead>
-                    <TableHead className="w-[120px] text-right">
-                      Estimated Cost
-                    </TableHead>
-                    <TableHead className="w-[100px]">Status</TableHead>
-                    <TableHead className="w-[80px]">Action</TableHead>
+                    <TableHead className="w-[120px]">Norms Basis Qty</TableHead>
+                    <TableHead className="w-[100px]">Constant Value</TableHead>
+                    <TableHead className="w-[120px]">Total Quantity</TableHead>
+                    <TableHead className="w-[120px]">Unit Rate</TableHead>
+                    <TableHead className="w-[120px] text-right">Total Amount</TableHead>
+                    <TableHead className="w-[100px]">Action</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {workItems && workItems.length > 0 ? (
-                    workItems.map((item, idx) => (
-                      <TableRow key={item.id}>
-                        <TableCell className="font-semibold">
-                          {idx + 1}
-                        </TableCell>
-                        <TableCell className="font-medium">
-                          {item.description}
-                        </TableCell>
-                        <TableCell className="text-center">-</TableCell>
-                        <TableCell className="text-center">
-                          {item.actualMeasuredQty || "-"}
-                        </TableCell>
-                        <TableCell className="text-center">-</TableCell>
-                        <TableCell className="text-right font-bold">
-                          ₹ 0.00
-                        </TableCell>
-                        <TableCell>
-                          <span className="px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-800">
-                            Pending
-                          </span>
-                        </TableCell>
-                        <TableCell className="text-center">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="rounded-lg"
-                          >
-                            Edit
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))
+                    workItems.map((item, idx) => {
+                      const unitRate = ratesData[String(item.id)]?.rateExcl || 0;
+                      const basis = parseFloat(item.normsBasisQty) || 1;
+                      const constantValue = parseFloat(
+                        item.constants[0]?.constantValue || "0"
+                      ) || 0;
+                      const totalQuantity = constantValue * basis;
+                      const totalAmount = totalQuantity * unitRate;
+
+                      return (
+                        <TableRow key={item.id}>
+                          <TableCell className="font-semibold">{idx + 1}</TableCell>
+                          <TableCell className="font-medium">
+                            {item.description}
+                          </TableCell>
+                          <TableCell className="text-center">{item.unit || "-"}</TableCell>
+                          <TableCell className="text-center">
+                            <Input
+                              type="number"
+                              placeholder="0.00"
+                              value={item.normsBasisQty}
+                              readOnly
+                              className="border-0 rounded-0 text-center bg-gray-50"
+                              step="0.01"
+                            />
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <Input
+                              type="number"
+                              placeholder="0.00"
+                              value={constantValue}
+                              readOnly
+                              className="border-0 rounded-0 text-center bg-gray-50"
+                              step="0.01"
+                            />
+                          </TableCell>
+                          <TableCell className="text-center font-bold bg-blue-50">
+                            {totalQuantity.toFixed(2)}
+                          </TableCell>
+                          <TableCell className="text-center font-bold bg-green-50">
+                            ₹ {unitRate.toFixed(2)}
+                          </TableCell>
+                          <TableCell className="text-right font-bold bg-yellow-50">
+                            ₹ {totalAmount.toFixed(2)}
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="rounded-lg"
+                              disabled
+                            >
+                              View
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={8} className="text-center py-8">
+                      <TableCell colSpan={9} className="text-center py-8">
                         <p className="text-muted-foreground">
                           No materials found. Add materials from Norms
                           first.
@@ -2565,5 +2583,9 @@ export function ProcurementManagementDashboard() {
 }
 
 export default function Dashboard() {
+  const [ratesData, setRatesData] = useState<Record<string, RatesDataItem>>(
+    () => getFromLocalStorage(STORAGE_KEYS.RATES_DATA, {}),
+  );
+
   return <QuantityBreakdownDashboard />;
 }

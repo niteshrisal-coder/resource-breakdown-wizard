@@ -78,21 +78,24 @@ function RateAnalysisComponent() {
                   {resource.name}
                 </TableCell>
                 <TableCell>
-                  <Input 
-                    type="number" 
-                    placeholder="0.00"
-                    value={rates[resource.id]?.unitRate || ''}
-                    onChange={(e) => handleRateChange(resource.id, 'unitRate', e.target.value)}
+<Input 
+    type="number" 
+    id={`unitRate-${resource.id}`}
+    name="unitRate"
+    placeholder="0.00"
+    value={rates[resource.id]?.unitRate || ''}                    onChange={(e) => handleRateChange(resource.id, 'unitRate', e.target.value)}
                     className="max-w-[120px]"
                   />
                 </TableCell>
                 <TableCell>
-                  <Input 
-                    type="number" 
-                    placeholder="0.00"
-                    value={rates[resource.id]?.logisticsRate || ''}
-                    onChange={(e) => handleRateChange(resource.id, 'logisticsRate', e.target.value)}
-                    className="max-w-[120px]"
+                 <Input 
+    type="number" 
+     id={`logisticsRate-${resource.id}`}
+    name="logisticsRate"
+    placeholder="0.00"
+    value={rates[resource.id]?.logisticsRate || ''}
+    onChange={(e) => handleRateChange(resource.id, 'logisticsRate', e.target.value)}
+    className="max-w-[120px]"
                   />
                 </TableCell>
                 <TableCell className="text-right font-bold">

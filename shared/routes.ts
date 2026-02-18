@@ -68,6 +68,16 @@ export const api = {
         400: errorSchemas.validation,
       },
     },
+    update: {
+      method: 'PATCH' as const,
+      path: '/api/resource-columns/:id',
+      input: insertResourceColumnSchema.partial(),
+      responses: {
+        200: z.custom<typeof resourceColumns.$inferSelect>(),
+        400: errorSchemas.validation,
+        404: errorSchemas.notFound,
+      },
+    },
     delete: {
       method: 'DELETE' as const,
       path: '/api/resource-columns/:id',
